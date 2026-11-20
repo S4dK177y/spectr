@@ -1,0 +1,32 @@
+# Gradle & Build outputs
+*.iml
+.gradle/
+/build/
+app/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# IDE
+/.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Local environment & secrets (NEVER commit!)
+local.properties
+secrets.properties
+*.jks
+*.keystore
+.env
+.env.*
+
+# Private personal backups / spreadsheet exports (NEVER commit!)
+private-backup*.json
+*personal*.json
+*export*.pdf
+*export*.csv

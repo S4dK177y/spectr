@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">Spectr</string>
+
+    <!-- Bottom navigation tabs -->
+    <string name="tab_diary">Дневник</string>
+    <string name="tab_overview">Обзор</string>
+    <string name="tab_scales">Шкалы</string>
+    <string name="tab_more">Ещё</string>
+
+    <!-- Stage 0 placeholders & onboarding shell -->
+    <string name="diary_shell_title">Ежедневный трекер</string>
+    <string name="diary_shell_subtitle">Здесь появится быстрый «Итог дня» (4 карточки, отрезки сна, 7 симптомов) и 5-секундные «Отметки момента».</string>
+    <string name="mood_spectrum_preview_title">Палитра шкалы настроения (-5 .. +5)</string>
+    <string name="overview_shell_title">Календарь и графики</string>
+    <string name="overview_shell_subtitle">Помесячный календарь, 3 векторных графика и 14 KPI-метрик подключатся на Этапе 3.</string>
+    <string name="scales_shell_title">Клинические шкалы</string>
+    <string name="scales_shell_subtitle">Авторасчёт PHQ-9 (14 дн.), GAD-7 (14 дн.) и ASRM (7 дн.) + история подтверждённых замеров появятся на Этапе 3.</string>
+
+    <!-- More / Theme settings -->
+    <string name="more_title">Настройки и врач</string>
+    <string name="theme_section_title">Оформление и темы</string>
+    <string name="theme_mode_label">Режим экрана</string>
+    <string name="theme_mode_system">Системный</string>
+    <string name="theme_mode_light">Светлый</string>
+    <string name="theme_mode_dark">Тёмный</string>
+    <string name="theme_mode_amoled">AMOLED</string>
+    <string name="theme_palette_label">Цветовая палитра</string>
+    <string name="theme_palette_dynamic">Pixel Material You</string>
+    <string name="theme_palette_dynamic_desc">Подстраивается под системные обои Android 12+</string>
+    <string name="theme_palette_minimal">Спокойный минимализм</string>
+    <string name="theme_palette_minimal_desc">Нейтральный монохром, цвет только на данных</string>
+    <string name="theme_palette_warm_paper">Тёплая бумага</string>
+    <string name="theme_palette_warm_paper_desc">Мягкие природные и кремовые оттенки</string>
+    <string name="theme_palette_soft_slate">Мягкий сланец</string>
+    <string name="theme_palette_soft_slate_desc">Приглушённый спокойный сине-зелёный тон</string>
+    <string name="privacy_badge_title">Приватность и offline-first</string>
+    <string name="privacy_badge_subtitle">Локальный режим без аккаунта • E2EE-синхронизация Supabase на Этапе 6 • Без телеметрии</string>
+</resources>
