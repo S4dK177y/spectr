@@ -1,10 +1,8 @@
 package app.spectr.mood.ui
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -15,9 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Lock
@@ -32,10 +28,13 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,9 +48,10 @@ import app.spectr.mood.R
 import app.spectr.mood.domain.model.ThemeConfig
 import app.spectr.mood.domain.model.ThemeMode
 import app.spectr.mood.domain.model.ThemePalette
+import app.spectr.mood.ui.diary.DiaryRoute
+import app.spectr.mood.ui.diary.DiaryScreen
+import app.spectr.mood.ui.diary.sampleDiaryPreviewState
 import app.spectr.mood.ui.navigation.SpectrDestination
-import app.spectr.mood.ui.theme.LocalMoodColors
-import app.spectr.mood.ui.theme.MoodColorScale
 import app.spectr.mood.ui.theme.SpectrTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,12 +60,17 @@ fun SpectrApp(
     themeConfig: ThemeConfig,
     onThemeModeChange: (ThemeMode) -> Unit,
     onThemePaletteChange: (ThemePalette) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    diaryContent: @Composable (SnackbarHostState) -> Unit = { hostState ->
+        DiaryRoute(snackbarHostState = hostState)
+    }
 ) {
     var currentTab by rememberSaveable { mutableStateOf(SpectrDestination.DIARY) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -108,7 +113,7 @@ fun SpectrApp(
                 .padding(innerPadding)
         ) { tab ->
             when (tab) {
-                SpectrDestination.DIARY -> DiaryShellScreen()
+                SpectrDestination.DIARY -> diaryContent(snackbarHostState)
                 SpectrDestination.OVERVIEW -> StagePlaceholderScreen(
                     title = stringResource(R.string.overview_shell_title),
                     subtitle = stringResource(R.string.overview_shell_subtitle)
@@ -123,81 +128,6 @@ fun SpectrApp(
                     onThemePaletteChange = onThemePaletteChange
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun DiaryShellScreen(modifier: Modifier = Modifier) {
-    val moodColors = LocalMoodColors.current
-
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                ),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = stringResource(R.string.diary_shell_title),
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.diary_shell_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-
-        item {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                ),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = stringResource(R.string.mood_spectrum_preview_title),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        for (score in MoodColorScale.MIN_MOOD..MoodColorScale.MAX_MOOD) {
-                            Box(
-                                modifier = Modifier
-                                    .size(28.dp)
-                                    .clip(CircleShape)
-                                    .background(moodColors.containerColor(score)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = if (score > 0) "+$score" else score.toString(),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = moodColors.contentColor(score)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        item {
-            PrivacyBadgeCard()
         }
     }
 }
@@ -394,7 +324,8 @@ private fun SpectrAppLightPreview() {
         SpectrApp(
             themeConfig = ThemeConfig(mode = ThemeMode.LIGHT, palette = ThemePalette.SOFT_SLATE),
             onThemeModeChange = {},
-            onThemePaletteChange = {}
+            onThemePaletteChange = {},
+            diaryContent = { DiaryScreen(state = sampleDiaryPreviewState(), onIntent = {}) }
         )
     }
 }
@@ -408,7 +339,8 @@ private fun SpectrAppAmoledPreview() {
         SpectrApp(
             themeConfig = ThemeConfig(mode = ThemeMode.AMOLED, palette = ThemePalette.WARM_PAPER),
             onThemeModeChange = {},
-            onThemePaletteChange = {}
+            onThemePaletteChange = {},
+            diaryContent = { DiaryScreen(state = sampleDiaryPreviewState(), onIntent = {}) }
         )
     }
 }

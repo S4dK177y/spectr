@@ -16,6 +16,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.time.Clock
 import javax.inject.Singleton
 
 @Module
@@ -52,6 +53,10 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideEpochClock(): EpochClock = EpochClock { System.currentTimeMillis() }
+
+    @Provides
+    @Singleton
+    fun provideSystemClock(): Clock = Clock.systemDefaultZone()
 
     @Provides
     @Singleton

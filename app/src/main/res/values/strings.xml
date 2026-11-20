@@ -7,17 +7,189 @@
     <string name="tab_scales">Шкалы</string>
     <string name="tab_more">Ещё</string>
 
-    <!-- Stage 0 placeholders & onboarding shell -->
-    <string name="diary_shell_title">Ежедневный трекер</string>
-    <string name="diary_shell_subtitle">Здесь появится быстрый «Итог дня» (4 карточки, отрезки сна, 7 симптомов) и 5-секундные «Отметки момента».</string>
-    <string name="mood_spectrum_preview_title">Палитра шкалы настроения (-5 .. +5)</string>
+    <!-- Stage placeholders for upcoming tabs -->
     <string name="overview_shell_title">Календарь и графики</string>
     <string name="overview_shell_subtitle">Помесячный календарь, 3 векторных графика и 14 KPI-метрик подключатся на Этапе 3.</string>
     <string name="scales_shell_title">Клинические шкалы</string>
     <string name="scales_shell_subtitle">Авторасчёт PHQ-9 (14 дн.), GAD-7 (14 дн.) и ASRM (7 дн.) + история подтверждённых замеров появятся на Этапе 3.</string>
 
+    <!-- Diary: Date switcher & header -->
+    <string name="diary_yesterday">Вчера</string>
+    <string name="diary_today">Сегодня</string>
+    <string name="diary_prev_day_cd">Предыдущий день</string>
+    <string name="diary_next_day_cd">Следующий день</string>
+    <string name="diary_pick_date_cd">Выбрать дату</string>
+    <string name="diary_status_saved">Итог сохранён</string>
+    <string name="diary_status_unsaved">Есть несохранённые изменения</string>
+    <string name="diary_status_empty">Итог дня ещё не заполнен</string>
+    <string name="diary_date_picker_title">Выберите дату</string>
+    <string name="diary_action_ok">Готово</string>
+    <string name="diary_action_cancel">Отмена</string>
+    <string name="diary_action_close">Понятно</string>
+    <string name="diary_action_delete">Удалить</string>
+
+    <!-- Diary: Moments section & quick sheet -->
+    <string name="diary_moments_title">Отметки момента</string>
+    <string name="diary_moments_add_button">+ Момент</string>
+    <string name="diary_moments_empty_hint">Быстрая 5-секундная фиксация в течение дня — вечером поможет оценить общий итог.</string>
+    <string name="diary_moments_range_hint">Размах за день: %1$s .. %2$s</string>
+    <string name="diary_moments_count_badge">%1$d</string>
+    <string name="diary_moment_sheet_new_title">Отметка момента</string>
+    <string name="diary_moment_sheet_edit_title">Изменить отметку</string>
+    <string name="diary_moment_time_label">Время</string>
+    <string name="diary_moment_time_picker_title">Время отметки</string>
+    <string name="diary_moment_optional_metrics">Дополнительно (необязательно)</string>
+    <string name="diary_moment_note_label">Короткая фраза</string>
+    <string name="diary_moment_note_placeholder">Что происходит сейчас, триггер или ощущение…</string>
+    <string name="diary_moment_save_button">Сохранить момент</string>
+    <string name="diary_moment_update_button">Обновить момент</string>
+    <string name="diary_moment_metric_energy_short">Эн %1$d</string>
+    <string name="diary_moment_metric_anxiety_short">Тр %1$d</string>
+    <string name="diary_moment_metric_irritability_short">Рз %1$d</string>
+
+    <!-- Diary Card 1: Mood & dynamics -->
+    <string name="diary_card_mood_title">1. Настроение и фон</string>
+    <string name="diary_mood_help_cd">Подсказка по шкале настроения</string>
+    <string name="diary_dynamics_label">Динамика за день</string>
+    <string name="diary_dynamics_steady">Ровно</string>
+    <string name="diary_dynamics_worse_morning">Утром хуже</string>
+    <string name="diary_dynamics_worse_evening">Вечером хуже</string>
+    <string name="diary_dynamics_worse_night">Ночью хуже</string>
+    <string name="diary_dynamics_swings">Качели за день</string>
+
+    <!-- Mood level neutral descriptions (-5 .. +5) -->
+    <string name="mood_desc_m5">Крайне тяжёлый спад, почти нет сил на базовые дела</string>
+    <string name="mood_desc_m4">Сильный спад, очень тяжело справляться с рутиной</string>
+    <string name="mood_desc_m3">Выраженный спад, заметно ниже обычного фона</string>
+    <string name="mood_desc_m2">Умеренный спад, фон ощутимо снижен</string>
+    <string name="mood_desc_m1">Лёгкий спад, немного ниже ровного</string>
+    <string name="mood_desc_0">Ровный, спокойный базовый фон</string>
+    <string name="mood_desc_p1">Лёгкий подъём, чуть больше бодрости</string>
+    <string name="mood_desc_p2">Заметный подъём, высокая включённость</string>
+    <string name="mood_desc_p3">Выраженный подъём, сильный прилив активности</string>
+    <string name="mood_desc_p4">Очень высокий подъём, сложно замедлиться</string>
+    <string name="mood_desc_p5">Предельный подъём и перевозбуждение, потеря тормозов</string>
+
+    <!-- Mood help sheet -->
+    <string name="diary_help_mood_title">Как оценивать настроение (−5 .. +5)</string>
+    <string name="diary_help_mood_intro">Оценивайте общий фон дня целиком, ориентируясь на свой обычный спокойный уровень (0). Если в течение дня фон менялся, дополнительно укажите «Динамику за день».</string>
+    <string name="diary_help_mood_death_thoughts_title">Важное правило про мысли о смерти</string>
+    <string name="diary_help_mood_death_thoughts_body">Не ставьте −5 автоматически только из-за пассивных мыслей о смерти. Оцените общий фон дня отдельно (например, −2 или −3), а наличие таких мыслей отметьте отдельным чипом симптомов ниже.</string>
+    <string name="diary_help_mood_scale_summary">−5..−1 — снижение фона (от лёгкого до крайне тяжёлого).\n0 — ровный, нейтральный фон.\n+1..+5 — повышение фона и активации (от лёгкой бодрости до предельного перевозбуждения).</string>
+
+    <!-- Diary Card 2: Sleep & energy -->
+    <string name="diary_card_sleep_title">2. Сон и энергия</string>
+    <string name="diary_sleep_mode_intervals">Отрезки сна</string>
+    <string name="diary_sleep_mode_manual">Вручную (часы)</string>
+    <string name="diary_sleep_add_interval">+ Добавить отрезок</string>
+    <string name="diary_sleep_empty_intervals">Добавьте один или несколько отрезков сна (поддерживается разбитый сон и переход через полночь).</string>
+    <string name="diary_sleep_total_empty">Сон не указан</string>
+    <string name="diary_sleep_short_warning">%1$s · недосып (&lt; 6 ч)</string>
+    <string name="diary_sleep_deduction_tag">−%1$d мин</string>
+    <string name="diary_sleep_remove_interval_cd">Удалить отрезок сна</string>
+    <string name="diary_sleep_manual_label">Длительность сна</string>
+    <string name="diary_sleep_manual_placeholder">Например: 7.5 или 7ч 30м</string>
+    <string name="diary_sleep_manual_parsed">Распознано: %1$s</string>
+    <string name="diary_sleep_manual_error">Не удалось распознать длительность. Попробуйте формат «7.5» или «7ч 30м».</string>
+    <string name="diary_sleep_note_label">Комментарий о сне (необязательно)</string>
+    <string name="diary_sleep_note_placeholder">Частые пробуждения, ранний подъём, тяжёлое засыпание…</string>
+    <string name="diary_sleep_dialog_new_title">Добавить отрезок сна</string>
+    <string name="diary_sleep_dialog_edit_title">Изменить отрезок сна</string>
+    <string name="diary_sleep_start_label">Уснул(а)</string>
+    <string name="diary_sleep_end_label">Проснулся(ась)</string>
+    <string name="diary_sleep_deduction_label">Вычет ночных пробуждений (мин)</string>
+    <string name="diary_sleep_deduction_custom_label">Своё значение (мин)</string>
+    <string name="diary_sleep_net_preview">Чистый сон: %1$s</string>
+    <string name="diary_sleep_duration_hm">%1$d ч %2$d мин</string>
+    <string name="diary_sleep_duration_h">%1$d ч</string>
+    <string name="diary_sleep_duration_m">%1$d мин</string>
+    <string name="diary_energy_label">Энергия</string>
+    <string name="diary_energy_min_hint">0 — нет сил</string>
+    <string name="diary_energy_max_hint">10 — максимум</string>
+
+    <!-- Diary Card 3: Anxiety, irritability & 7 symptoms -->
+    <string name="diary_card_symptoms_title">3. Тревога, раздражительность и симптомы</string>
+    <string name="diary_anxiety_label">Тревога</string>
+    <string name="diary_anxiety_min_hint">0 — спокойно</string>
+    <string name="diary_anxiety_max_hint">10 — пиковая</string>
+    <string name="diary_irritability_label">Раздражительность</string>
+    <string name="diary_irritability_min_hint">0 — ровно</string>
+    <string name="diary_irritability_max_hint">10 — на пределе</string>
+    <string name="diary_rating_out_of_ten">%1$d / 10</string>
+    <string name="diary_mixed_day_title">Смешанный день</string>
+    <string name="diary_mixed_day_subtitle">Сниженный фон (≤ −1) сочетается с высокой энергией, раздражительностью (≥ 7) или ускоренными мыслями.</string>
+    <string name="diary_symptoms_section_label">Симптомы за день</string>
+    <string name="diary_symptoms_all_help_cd">Подсказка по всем 7 симптомам</string>
+    <string name="diary_symptom_help_cd">Подсказка для симптома: %1$s</string>
+    <string name="diary_help_symptoms_all_title">Критерии 7 симптомов</string>
+    <string name="diary_help_when_mark">Когда ставить</string>
+    <string name="diary_help_when_not_mark">Когда не ставить</string>
+
+    <!-- 7 symptoms labels & neutral criteria -->
+    <string name="symptom_apathy_label">Апатия / нет радости</string>
+    <string name="symptom_apathy_when">Заметная потеря интереса и удовольствия от привычных дел на протяжении большей части дня.</string>
+    <string name="symptom_apathy_when_not">Обычная физическая усталость после тяжёлого дня, если интерес и радость сохраняются.</string>
+
+    <string name="symptom_self_criticism_label">Самокритика / вина</string>
+    <string name="symptom_self_criticism_when">Навязчивые самообвинения, чувство никчёмности или несоразмерная вина за мелочи.</string>
+    <string name="symptom_self_criticism_when_not">Спокойный, конструктивный разбор конкретной ошибки без самоуничижения.</string>
+
+    <string name="symptom_brain_fog_label">Туман / фокус</string>
+    <string name="symptom_brain_fog_when">Трудно удерживать внимание, принимать простые решения, ощущение «ваты» или заторможенности в голове.</string>
+    <string name="symptom_brain_fog_when_not">Кратковременная рассеянность из-за шумной обстановки или переключения между задачами.</string>
+
+    <string name="symptom_binge_eating_label">Пищевой срыв</string>
+    <string name="symptom_binge_eating_when">Эпизод выраженного переедания с ощущением потери контроля или заметного заедания эмоций.</string>
+    <string name="symptom_binge_eating_when_not">Обычный плотный ужин, праздничный стол или плановая смена рациона без потери контроля.</string>
+
+    <string name="symptom_death_thoughts_label">Мысли о смерти</string>
+    <string name="symptom_death_thoughts_when">Любые мысли о желании исчезнуть, уснуть и не проснуться, бессмысленности жизни или самоповреждении.</string>
+    <string name="symptom_death_thoughts_when_not">Отвлечённые философские размышления или новости без отношения к собственному состоянию. (Наличие галочки не требует автоматически ставить −5.)</string>
+
+    <string name="symptom_hyperfocus_label">Гиперфикс / идеи</string>
+    <string name="symptom_hyperfocus_when">Необычайно сильная захваченность проектом, потоком идей или планов, от которых трудно оторваться даже ради сна и еды.</string>
+    <string name="symptom_hyperfocus_when_not">Спокойная продуктивная работа или увлечённость хобби, которую легко поставить на паузу.</string>
+
+    <string name="symptom_racing_thoughts_label">Ускор. мысли</string>
+    <string name="symptom_racing_thoughts_when">Ощущение скачки мыслей, когда идеи перескакивают быстрее обычного, сложно затормозить внутренний поток или речь.</string>
+    <string name="symptom_racing_thoughts_when_not">Обычное волнение перед важным событием без ощущения неконтролируемого ускорения потока мыслей.</string>
+
+    <!-- Diary Card 4: Details & note -->
+    <string name="diary_card_details_title">4. Детали и заметка</string>
+    <string name="diary_alcohol_label">Алкоголь</string>
+    <string name="diary_alcohol_none">Нет</string>
+    <string name="diary_alcohol_light_occasion">Немного (повод)</string>
+    <string name="diary_alcohol_heavy_occasion">Много (повод)</string>
+    <string name="diary_alcohol_stress_coping">На стрессе / спаде</string>
+
+    <string name="diary_medication_label">Лекарства (психотропные)</string>
+    <string name="diary_medication_not_prescribed">Не назначены</string>
+    <string name="diary_medication_taken">Принял по схеме</string>
+    <string name="diary_medication_side_effects">Принял (есть побочки)</string>
+    <string name="diary_medication_missed_forgot">Пропуск (забыл)</string>
+    <string name="diary_medication_missed_side_effects">Пропуск из-за побочек</string>
+
+    <string name="diary_note_label">Заметка за день</string>
+    <string name="diary_note_placeholder">Что повлияло на состояние, важные события, триггеры…</string>
+
+    <!-- Diary footer actions & dialogs -->
+    <string name="diary_save_button">Сохранить итог дня</string>
+    <string name="diary_update_button">Обновить итог дня</string>
+    <string name="diary_saved_button">Итог дня сохранён</string>
+    <string name="diary_delete_entry_button">Удалить запись за этот день</string>
+    <string name="diary_delete_entry_dialog_title">Удалить итог дня?</string>
+    <string name="diary_delete_entry_dialog_body">Запись за %1$s будет удалена из дневника. Отметки момента за этот день останутся.</string>
+
+    <!-- Diary snackbars -->
+    <string name="diary_snackbar_entry_saved">Итог дня сохранён</string>
+    <string name="diary_snackbar_entry_updated">Итог дня обновлён</string>
+    <string name="diary_snackbar_entry_deleted">Запись за день удалена</string>
+    <string name="diary_snackbar_moment_saved">Отметка момента добавлена</string>
+    <string name="diary_snackbar_moment_updated">Отметка момента обновлена</string>
+    <string name="diary_snackbar_moment_deleted">Отметка момента удалена</string>
+    <string name="diary_snackbar_sleep_invalid">Проверьте формат длительности сна перед сохранением</string>
+
     <!-- More / Theme settings -->
-    <string name="more_title">Настройки и врач</string>
     <string name="theme_section_title">Оформление и темы</string>
     <string name="theme_mode_label">Режим экрана</string>
     <string name="theme_mode_system">Системный</string>
