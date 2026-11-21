@@ -58,7 +58,7 @@ import java.time.YearMonth
 internal fun OverviewCalendarCard(
     state: OverviewUiState,
     onIntent: (OverviewIntent) -> Unit,
-    onOpenDiaryDate: (LocalDate) -> Unit,
+    onOpenDiaryDate: ((LocalDate) -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -180,7 +180,7 @@ internal fun OverviewCalendarCard(
                         week.forEach { cell ->
                             CalendarDayTile(
                                 cell = cell,
-                                onClick = { onOpenDiaryDate(cell.date) },
+                                onClick = onOpenDiaryDate?.let { cb -> { cb(cell.date) } },
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -192,13 +192,15 @@ internal fun OverviewCalendarCard(
 
             MoodColorLegend()
 
-            Spacer(modifier = Modifier.height(6.dp))
+            if (onOpenDiaryDate != null) {
+                Spacer(modifier = Modifier.height(6.dp))
 
-            Text(
-                text = stringResource(R.string.overview_calendar_tap_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                Text(
+                    text = stringResource(R.string.overview_calendar_tap_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -236,7 +238,7 @@ private fun WeekdayHeaderRow() {
 }
 
 @Composable
-private fun CalendarDayTile(cell: CalendarDayCell, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun CalendarDayTile(cell: CalendarDayCell, onClick: (() -> Unit)?, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(10.dp)
     val entry = cell.entry
     val (backgroundColor, textColor) = resolveCalendarTileColors(cell)
@@ -246,7 +248,7 @@ private fun CalendarDayTile(cell: CalendarDayCell, onClick: () -> Unit, modifier
     } else {
         Modifier
     }
-    val clickModifier = if (cell.isSelectable) Modifier.clickable(onClick = onClick) else Modifier
+    val clickModifier = if (cell.isSelectable && onClick != null) Modifier.clickable(onClick = onClick) else Modifier
 
     Box(
         modifier = modifier

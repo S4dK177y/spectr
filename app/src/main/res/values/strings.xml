@@ -374,7 +374,7 @@
     <string name="theme_palette_soft_slate">Мягкий сланец</string>
     <string name="theme_palette_soft_slate_desc">Приглушённый спокойный сине-зелёный тон</string>
     <string name="privacy_badge_title">Приватность и offline-first</string>
-    <string name="privacy_badge_subtitle">Локальный режим без аккаунта • E2EE-синхронизация Supabase на Этапе 6 • Без телеметрии</string>
+    <string name="privacy_badge_subtitle">Локальный режим без аккаунта • PIN/биометрия и FLAG_SECURE • E2EE-синхронизация Supabase на Этапе 6 • Без телеметрии</string>
 
     <!-- Notifications & channels (neutral wording, lockscreen-safe) -->
     <string name="notification_channel_daily_name">Ежедневные напоминания</string>
@@ -434,4 +434,129 @@
     <string name="widget_action_daily_summary">Итог дня</string>
     <string name="widget_preview_today_mood">+1</string>
     <string name="widget_preview_status">Сегодня: +1 · 7-дневная динамика</string>
+
+    <!-- More tab: Doctor tools & Reference guide -->
+    <string name="more_doctor_section_title">Врачу и справочник</string>
+    <string name="more_pdf_export_title">Экспорт PDF для врача</string>
+    <string name="more_pdf_export_subtitle">Векторная сводка KPI, шкалы, календарь, 3 графика и опциональная таблица</string>
+    <string name="more_doctor_mode_title">Режим показа врачу</string>
+    <string name="more_doctor_mode_subtitle">Чистый экран «только чтение» со скрытием личных заметок и моментов</string>
+    <string name="more_guide_title">Справочник</string>
+    <string name="more_guide_subtitle">Шкала −5..+5 (справочно), правила заполнения и критерии 7 симптомов</string>
+
+    <!-- More tab: Local Security (PIN / Biometrics / FLAG_SECURE) -->
+    <string name="security_section_title">Локальная защита</string>
+    <string name="security_app_lock_title">Блокировка приложения (PIN)</string>
+    <string name="security_app_lock_subtitle">Запрашивать 4-значный PIN при открытии приложения</string>
+    <string name="security_change_pin_button">Сменить PIN</string>
+    <string name="security_lock_now_button">Заблокировать</string>
+    <string name="security_biometric_title">Разблокировка по биометрии</string>
+    <string name="security_biometric_subtitle_available">Отпечаток пальца или лицо вместо ввода PIN-кода</string>
+    <string name="security_biometric_subtitle_not_enrolled">На устройстве не настроена биометрия в системных настройках</string>
+    <string name="security_biometric_subtitle_unavailable">Биометрический датчик недоступен на этом устройстве</string>
+    <string name="security_timeout_label">Автоблокировка после сворачивания</string>
+    <string name="security_timeout_immediate">Сразу</string>
+    <string name="security_timeout_30s">30 сек</string>
+    <string name="security_timeout_1m">1 мин</string>
+    <string name="security_timeout_5m">5 мин</string>
+    <string name="security_flag_secure_title">Защита экрана (FLAG_SECURE)</string>
+    <string name="security_flag_secure_subtitle">Блокирует скриншоты, запись экрана и скрывает превью в списке недавних</string>
+    <string name="security_snackbar_pin_enabled">Блокировка PIN-кодом включена</string>
+    <string name="security_snackbar_pin_changed">PIN-код обновлён</string>
+    <string name="security_snackbar_pin_disabled">Блокировка отключена</string>
+
+    <!-- PIN Setup / Verify / Change dialogs & App Lock screen -->
+    <string name="pin_setup_create_title">Задайте PIN-код</string>
+    <string name="pin_setup_create_subtitle">Введите 4 цифры для защиты дневника на этом устройстве</string>
+    <string name="pin_setup_confirm_title">Повторите PIN-код</string>
+    <string name="pin_setup_confirm_subtitle">Введите те же 4 цифры ещё раз для подтверждения</string>
+    <string name="pin_setup_mismatch_error">Коды не совпали. Попробуйте снова.</string>
+    <string name="pin_verify_current_title">Введите текущий PIN</string>
+    <string name="pin_verify_disable_subtitle">Подтвердите PIN-код, чтобы отключить блокировку</string>
+    <string name="pin_verify_change_subtitle">Подтвердите текущий PIN-код, чтобы задать новый</string>
+    <string name="pin_wrong_error">Неверный PIN-код</string>
+    <string name="pin_lock_title">Spectr защищён</string>
+    <string name="pin_lock_subtitle">Введите PIN-код для входа</string>
+    <string name="pin_lock_cooldown_error">Слишком много попыток. Повторите через %1$d сек.</string>
+    <string name="pin_lock_biometric_cd">Войти по биометрии</string>
+    <string name="pin_lock_backspace_cd">Удалить цифру</string>
+    <string name="biometric_prompt_title">Вход в Spectr</string>
+    <string name="biometric_prompt_subtitle">Подтвердите личность для доступа к дневнику</string>
+    <string name="biometric_prompt_negative">Ввести PIN</string>
+
+    <!-- PDF Export Sheet -->
+    <string name="pdf_sheet_title">Экспорт PDF для врача</string>
+    <string name="pdf_sheet_period_label">Период отчёта</string>
+    <string name="pdf_period_custom">Свой</string>
+    <string name="pdf_custom_range_start">Начало</string>
+    <string name="pdf_custom_range_end">Конец</string>
+    <string name="pdf_custom_range_error">Дата начала не может быть позже даты окончания</string>
+    <string name="pdf_preview_summary">Записей: %1$d · Заметок: %2$d · Моментов: %3$d</string>
+    <string name="pdf_preview_empty">За выбранный период нет записей — будет сформирован пустой бланк.</string>
+    <string name="pdf_option_daily_table_title">Добавить таблицу по дням</string>
+    <string name="pdf_option_daily_table_subtitle">Добавит страницы 2+ с показателями по каждому дню: настроение, сон, энергия, тревога, симптомы</string>
+    <string name="pdf_option_notes_title">Включить личные заметки и моменты</string>
+    <string name="pdf_option_notes_subtitle">По умолчанию скрыты. При включении добавляются текстовые заметки, комментарии о сне и отметки момента.</string>
+    <string name="pdf_privacy_notice">Страница 1 всегда содержит только векторную сводку (KPI, маркеры, шкалы, календарь, 3 графика) без личного текста.</string>
+    <string name="pdf_action_share">Поделиться PDF</string>
+    <string name="pdf_action_open">Открыть</string>
+    <string name="pdf_action_save">Сохранить</string>
+    <string name="pdf_generating_label">Формируем векторный PDF…</string>
+    <string name="pdf_share_chooser_title">Отправить отчёт Spectr</string>
+    <string name="pdf_snackbar_saved">PDF сохранён (%1$d стр.)</string>
+    <string name="pdf_snackbar_no_viewer">На устройстве не найдено приложение для просмотра PDF</string>
+    <string name="pdf_snackbar_error">Не удалось сформировать PDF-отчёт</string>
+
+    <!-- Doctor View (Read-only mode) -->
+    <string name="doctor_mode_title">Режим показа врачу</string>
+    <string name="doctor_mode_back_cd">Закрыть режим показа врачу</string>
+    <string name="doctor_mode_privacy_banner">Только чтение · личные заметки и отметки момента скрыты · редактирование заблокировано</string>
+    <string name="doctor_mode_scales_title">Клинические шкалы (справочно)</string>
+    <string name="doctor_mode_scale_auto">Авто (%1$d/%2$d дн.): %3$d / %4$d · %5$s</string>
+    <string name="doctor_mode_scale_auto_empty">Авто: недостаточно данных</string>
+    <string name="doctor_mode_scale_confirmed">Подтверждённый (%1$s): %2$d / %3$d · %4$s</string>
+    <string name="doctor_mode_scale_confirmed_empty">Подтверждённый замер: нет</string>
+    <string name="doctor_mode_daily_log_title">Таблица по дням (без заметок)</string>
+    <string name="doctor_mode_daily_log_show">Показать (%1$d)</string>
+    <string name="doctor_mode_daily_log_hide">Скрыть</string>
+    <string name="doctor_mode_daily_log_metrics">Сон %1$s · Эн %2$d · Тр %3$d · Рз %4$d</string>
+    <string name="doctor_mode_daily_log_no_sleep">Сон — · Эн %1$d · Тр %2$d · Рз %3$d</string>
+
+    <!-- Reference Guide ("Справочник") -->
+    <string name="guide_title">Справочник</string>
+    <string name="guide_back_cd">Назад</string>
+    <string name="guide_disclaimer">Материалы справочника носят исключительно информационный характер и помогают вести более последовательное самонаблюдение. Приложение не ставит диагнозов и не заменяет консультацию специалиста.</string>
+    <string name="guide_section_mood_title">Шкала настроения −5 .. +5 (справочно)</string>
+    <string name="guide_section_mood_note">Справочные ориентиры помогают единообразно оценивать собственный фон день ото дня. Отталкивайтесь от своего привычного спокойного состояния (0).</string>
+    <string name="guide_mood_anchor_m5">Справочно: крайнее истощение, почти невозможно выполнять базовые действия.</string>
+    <string name="guide_mood_anchor_m4">Справочно: тяжёлый спад, повседневные задачи даются с огромным трудом.</string>
+    <string name="guide_mood_anchor_m3">Справочно: заметно сниженный фон большую часть дня, выраженная подавленность.</string>
+    <string name="guide_mood_anchor_m2">Справочно: ощутимое снижение, меньше ресурса и интереса, чем обычно.</string>
+    <string name="guide_mood_anchor_m1">Справочно: лёгкий спад, фон немного ниже привычной нормы.</string>
+    <string name="guide_mood_anchor_0">Справочно: ровный, спокойный базовый фон без заметного перекоса.</string>
+    <string name="guide_mood_anchor_p1">Справочно: лёгкий подъём, чуть больше бодрости и инициативы.</string>
+    <string name="guide_mood_anchor_p2">Справочно: заметный прилив энергии и вовлечённости выше привычного.</string>
+    <string name="guide_mood_anchor_p3">Справочно: выраженная активация, ускоренный темп, много идей и дел.</string>
+    <string name="guide_mood_anchor_p4">Справочно: очень высокая активация, трудно притормозить, снижена потребность в отдыхе.</string>
+    <string name="guide_mood_anchor_p5">Справочно: предельное перевозбуждение и потеря контроля над темпом и импульсами.</string>
+
+    <string name="guide_section_rules_title">Правила заполнения дневника</string>
+    <string name="guide_rule_overall_title">1. Общий фон дня и динамика</string>
+    <string name="guide_rule_overall_body">В «Итоге дня» оценивайте средний фон за сутки целиком, а колебания внутри дня фиксируйте в поле «Динамика за день» (например, «Утром хуже» или «Качели за день»).</string>
+    <string name="guide_rule_death_title">2. Правило про мысли о смерти</string>
+    <string name="guide_rule_death_body">Не ставьте −5 автоматически только из-за пассивных мыслей о смерти. Оцените общий фон дня отдельно (например, −2 или −3), а сам факт таких мыслей отметьте отдельным чипом симптомов.</string>
+    <string name="guide_rule_sleep_title">3. Разбитый сон и порог недосыпа</string>
+    <string name="guide_rule_sleep_body">Если сон был разорван, добавьте несколько отрезков (поддерживается переход через полночь) и при необходимости укажите вычет ночных пробуждений. Сон меньше 6 часов отмечается как недосып на графиках и в KPI.</string>
+    <string name="guide_rule_moments_title">4. Отметки момента</string>
+    <string name="guide_rule_moments_body">Короткие отметки с точным временем в течение дня помогают вечером не полагаться только на последнее впечатление. Они не видны в «Режиме показа врачу» и не попадают в PDF без вашего явного согласия.</string>
+    <string name="guide_rule_mixed_title">5. Как определяется «Смешанный день»</string>
+    <string name="guide_rule_mixed_body">Бейдж «Смешанный день» ставится автоматически, когда сниженный фон (настроение ≤ −1) сочетается с признаками активации: энергия ≥ 7, раздражительность ≥ 7 или отмечен чип «Ускор. мысли».</string>
+
+    <string name="guide_section_symptoms_title">Критерии 7 симптомов</string>
+    <string name="guide_section_scales_title">Клинические шкалы (справочно)</string>
+    <string name="guide_scales_auto_title">Авторасчёт по дневнику и подтверждение</string>
+    <string name="guide_scales_auto_body">Приложение пересчитывает ориентировочные баллы по последним заполненным дням (окно 14 дней для PHQ-9 и GAD-7, окно 7 дней для ASRM). Вы можете в любой момент сверить каждый пункт вручную и сохранить «Подтверждённый замер» — именно он фиксируется в истории динамики и отчёте.</string>
+    <string name="guide_scales_phq9_ranges">PHQ-9 (0–27, 14 дн.): 0–4 Минимальный · 5–9 Лёгкий · 10–14 Умеренный · 15–19 Умеренно-тяжёлый · 20–27 Выраженный.</string>
+    <string name="guide_scales_gad7_ranges">GAD-7 (0–21, 14 дн.): 0–4 Минимальная · 5–9 Лёгкая · 10–14 Умеренная · 15–21 Выраженная.</string>
+    <string name="guide_scales_asrm_ranges">ASRM (0–20, 7 дн.): 0–5 Обычный фон · 6–20 Повышенная активация.</string>
 </resources>

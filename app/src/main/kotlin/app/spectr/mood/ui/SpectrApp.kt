@@ -1,5 +1,6 @@
 package app.spectr.mood.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -33,6 +34,8 @@ import app.spectr.mood.platform.SpectrLaunchTarget
 import app.spectr.mood.ui.diary.DiaryRoute
 import app.spectr.mood.ui.diary.DiaryScreen
 import app.spectr.mood.ui.diary.sampleDiaryPreviewState
+import app.spectr.mood.ui.doctor.DoctorViewRoute
+import app.spectr.mood.ui.guide.GuideScreen
 import app.spectr.mood.ui.more.MoreRoute
 import app.spectr.mood.ui.more.MoreScreen
 import app.spectr.mood.ui.more.sampleMorePreviewState
@@ -46,6 +49,11 @@ import app.spectr.mood.ui.scales.sampleScalesPreviewState
 import app.spectr.mood.ui.theme.SpectrTheme
 import java.time.LocalDate
 
+private enum class MoreOverlay {
+    DOCTOR_MODE,
+    GUIDE
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpectrApp(
@@ -55,6 +63,7 @@ fun SpectrApp(
     modifier: Modifier = Modifier,
     launchRequest: SpectrLaunchRequest? = null,
     onLaunchRequestConsumed: () -> Unit = {},
+    onLockAppNow: () -> Unit = {},
     diaryContent: @Composable (SnackbarHostState, LocalDate?, () -> Unit, Long, () -> Unit) -> Unit =
         { hostState, requestedDate, onDateConsumed, openMomentId, onMomentConsumed ->
             DiaryRoute(
@@ -71,22 +80,32 @@ fun SpectrApp(
     scalesContent: @Composable (SnackbarHostState) -> Unit = { hostState ->
         ScalesRoute(snackbarHostState = hostState)
     },
-    moreContent: @Composable (SnackbarHostState) -> Unit = { hostState ->
-        MoreRoute(
-            themeConfig = themeConfig,
-            onThemeModeChange = onThemeModeChange,
-            onThemePaletteChange = onThemePaletteChange,
-            snackbarHostState = hostState
-        )
-    }
+    moreContent: @Composable (SnackbarHostState, () -> Unit, () -> Unit) -> Unit =
+        { hostState, onOpenDoctorMode, onOpenGuide ->
+            MoreRoute(
+                themeConfig = themeConfig,
+                onThemeModeChange = onThemeModeChange,
+                onThemePaletteChange = onThemePaletteChange,
+                onOpenDoctorMode = onOpenDoctorMode,
+                onOpenGuide = onOpenGuide,
+                onLockAppNow = onLockAppNow,
+                snackbarHostState = hostState
+            )
+        }
 ) {
     var currentTab by rememberSaveable { mutableStateOf(SpectrDestination.DIARY) }
+    var activeOverlay by rememberSaveable { mutableStateOf<MoreOverlay?>(null) }
     var requestedDiaryDateIso by rememberSaveable { mutableStateOf<String?>(null) }
     var openMomentRequestId by rememberSaveable { mutableLongStateOf(0L) }
     val snackbarHostState = remember { SnackbarHostState() }
 
+    BackHandler(enabled = activeOverlay != null) {
+        activeOverlay = null
+    }
+
     LaunchedEffect(launchRequest) {
         if (launchRequest != null) {
+            activeOverlay = null
             when (launchRequest.target) {
                 SpectrLaunchTarget.DAILY_SUMMARY -> {
                     requestedDiaryDateIso = LocalDate.now().toString()
@@ -102,6 +121,15 @@ fun SpectrApp(
             }
             onLaunchRequestConsumed()
         }
+    }
+
+    if (activeOverlay != null) {
+        SpectrMoreOverlayHost(
+            overlay = activeOverlay,
+            onClose = { activeOverlay = null },
+            modifier = modifier
+        )
+        return
     }
 
     val openDiaryDate: (LocalDate) -> Unit = { date ->
@@ -163,9 +191,22 @@ fun SpectrApp(
                 )
                 SpectrDestination.OVERVIEW -> overviewContent(openDiaryDate)
                 SpectrDestination.SCALES -> scalesContent(snackbarHostState)
-                SpectrDestination.MORE -> moreContent(snackbarHostState)
+                SpectrDestination.MORE -> moreContent(
+                    snackbarHostState,
+                    { activeOverlay = MoreOverlay.DOCTOR_MODE },
+                    { activeOverlay = MoreOverlay.GUIDE }
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun SpectrMoreOverlayHost(overlay: MoreOverlay?, onClose: () -> Unit, modifier: Modifier = Modifier) {
+    when (overlay) {
+        MoreOverlay.DOCTOR_MODE -> DoctorViewRoute(onClose = onClose, modifier = modifier)
+        MoreOverlay.GUIDE -> GuideScreen(onClose = onClose, modifier = modifier)
+        null -> Unit
     }
 }
 
@@ -183,12 +224,17 @@ private fun SpectrAppLightPreview() {
                 OverviewScreen(state = sampleOverviewPreviewState(), onIntent = {}, onOpenDiaryDate = {})
             },
             scalesContent = { ScalesScreen(state = sampleScalesPreviewState(), onIntent = {}) },
-            moreContent = {
+            moreContent = { _, _, _ ->
                 MoreScreen(
                     state = sampleMorePreviewState(),
                     themeConfig = config,
                     canPinWidget = true,
                     onIntent = {},
+                    onVerifyCurrentPin = { true },
+                    onSavePdfToFileClick = {},
+                    onOpenDoctorMode = {},
+                    onOpenGuide = {},
+                    onLockAppNow = {},
                     onThemeModeChange = {},
                     onThemePaletteChange = {},
                     onRequestNotificationPermission = {},
@@ -214,12 +260,17 @@ private fun SpectrAppAmoledPreview() {
                 OverviewScreen(state = sampleOverviewPreviewState(), onIntent = {}, onOpenDiaryDate = {})
             },
             scalesContent = { ScalesScreen(state = sampleScalesPreviewState(), onIntent = {}) },
-            moreContent = {
+            moreContent = { _, _, _ ->
                 MoreScreen(
                     state = sampleMorePreviewState(),
                     themeConfig = config,
                     canPinWidget = false,
                     onIntent = {},
+                    onVerifyCurrentPin = { true },
+                    onSavePdfToFileClick = {},
+                    onOpenDoctorMode = {},
+                    onOpenGuide = {},
+                    onLockAppNow = {},
                     onThemeModeChange = {},
                     onThemePaletteChange = {},
                     onRequestNotificationPermission = {},

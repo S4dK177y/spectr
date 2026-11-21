@@ -79,6 +79,8 @@ import app.spectr.mood.domain.model.ThemePalette
 import app.spectr.mood.domain.reminder.DailyReminderSchedule
 import app.spectr.mood.domain.reminder.ScalesReminderSchedule
 import app.spectr.mood.platform.widget.MoodWidgetReceiver
+import app.spectr.mood.ui.pdf.PdfExportBottomSheet
+import app.spectr.mood.ui.security.PinSetupDialog
 import app.spectr.mood.ui.theme.SpectrTheme
 import java.time.Instant
 import java.time.LocalDate
@@ -92,6 +94,9 @@ fun MoreRoute(
     themeConfig: ThemeConfig,
     onThemeModeChange: (ThemeMode) -> Unit,
     onThemePaletteChange: (ThemePalette) -> Unit,
+    onOpenDoctorMode: () -> Unit,
+    onOpenGuide: () -> Unit,
+    onLockAppNow: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     viewModel: MoreViewModel = viewModel()
@@ -101,6 +106,16 @@ fun MoreRoute(
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
     val pinRequestedText = stringResource(R.string.widget_pin_requested_snackbar)
+
+    val savePdfLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri ->
+        if (uri != null) {
+            viewModel.exportPdfToDestinationUri(uri)
+        }
+    }
+
+    ObserveMoreEvents(events = viewModel.events, snackbarHostState = snackbarHostState)
 
     val refreshPermissions = {
         viewModel.onIntent(
@@ -167,6 +182,11 @@ fun MoreRoute(
             }
             viewModel.onIntent(intent)
         },
+        onVerifyCurrentPin = viewModel::verifyCurrentPin,
+        onSavePdfToFileClick = { savePdfLauncher.launch(viewModel.suggestedPdfFileName()) },
+        onOpenDoctorMode = onOpenDoctorMode,
+        onOpenGuide = onOpenGuide,
+        onLockAppNow = onLockAppNow,
         onThemeModeChange = onThemeModeChange,
         onThemePaletteChange = onThemePaletteChange,
         onRequestNotificationPermission = requestNotifications,
@@ -182,6 +202,11 @@ fun MoreScreen(
     themeConfig: ThemeConfig,
     canPinWidget: Boolean,
     onIntent: (MoreIntent) -> Unit,
+    onVerifyCurrentPin: suspend (String) -> Boolean,
+    onSavePdfToFileClick: () -> Unit,
+    onOpenDoctorMode: () -> Unit,
+    onOpenGuide: () -> Unit,
+    onLockAppNow: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onThemePaletteChange: (ThemePalette) -> Unit,
     onRequestNotificationPermission: () -> Unit,
@@ -194,6 +219,23 @@ fun MoreScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item(key = "doctor_tools_card") {
+            DoctorToolsAndGuideCard(
+                onOpenPdfExport = { onIntent(MoreIntent.OpenPdfSheet) },
+                onOpenDoctorMode = onOpenDoctorMode,
+                onOpenGuide = onOpenGuide
+            )
+        }
+
+        item(key = "security_card") {
+            LocalSecurityCard(
+                config = state.securityConfig,
+                biometricAvailability = state.biometricAvailability,
+                onIntent = onIntent,
+                onLockNowClick = onLockAppNow
+            )
+        }
+
         item(key = "reminders_card") {
             RemindersCard(
                 state = state,
@@ -229,6 +271,32 @@ fun MoreScreen(
             initialMinute = state.reminderConfig.safeDailyMinute,
             onConfirm = { hour, minute -> onIntent(MoreIntent.UpdateDailyReminderTime(hour, minute)) },
             onDismiss = { onIntent(MoreIntent.DismissDailyTimePicker) }
+        )
+    }
+
+    val pinMode = state.pinDialogMode
+    if (pinMode != null) {
+        PinSetupDialog(
+            mode = pinMode,
+            onVerifyCurrentPin = onVerifyCurrentPin,
+            onSaveNewPin = { pin -> onIntent(MoreIntent.SaveNewPin(pin)) },
+            onVerifiedDisable = { onIntent(MoreIntent.ConfirmDisablePinLock) },
+            onDismiss = { onIntent(MoreIntent.DismissPinDialog) }
+        )
+    }
+
+    if (state.pdfSheet.isOpen) {
+        PdfExportBottomSheet(
+            state = state.pdfSheet,
+            onSelectPreset = { onIntent(MoreIntent.SelectPdfPeriodPreset(it)) },
+            onChangeCustomStart = { onIntent(MoreIntent.UpdatePdfCustomStart(it)) },
+            onChangeCustomEnd = { onIntent(MoreIntent.UpdatePdfCustomEnd(it)) },
+            onToggleDailyTable = { onIntent(MoreIntent.SetPdfIncludeDailyTable(it)) },
+            onToggleNotes = { onIntent(MoreIntent.SetPdfIncludePersonalNotes(it)) },
+            onShareClick = { onIntent(MoreIntent.GenerateAndSharePdf) },
+            onOpenClick = { onIntent(MoreIntent.GenerateAndOpenPdf) },
+            onSaveToFileClick = onSavePdfToFileClick,
+            onDismiss = { onIntent(MoreIntent.DismissPdfSheet) }
         )
     }
 }
@@ -833,6 +901,11 @@ private fun MoreScreenPreview() {
             themeConfig = ThemeConfig(mode = ThemeMode.LIGHT, palette = ThemePalette.SOFT_SLATE),
             canPinWidget = true,
             onIntent = {},
+            onVerifyCurrentPin = { true },
+            onSavePdfToFileClick = {},
+            onOpenDoctorMode = {},
+            onOpenGuide = {},
+            onLockAppNow = {},
             onThemeModeChange = {},
             onThemePaletteChange = {},
             onRequestNotificationPermission = {},

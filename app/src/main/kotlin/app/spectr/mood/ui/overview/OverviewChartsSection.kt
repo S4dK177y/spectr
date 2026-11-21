@@ -169,7 +169,7 @@ internal fun MoodTrendChartCard(
     referenceYear: Int,
     selectedIndex: Int?,
     onSelectIndex: (Int?) -> Unit,
-    onOpenDate: (LocalDate) -> Unit,
+    onOpenDate: ((LocalDate) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val moodColors = LocalMoodColors.current
@@ -198,7 +198,7 @@ internal fun MoodTrendChartCard(
                 MoodTooltipBanner(
                     point = selectedPoint,
                     referenceYear = referenceYear,
-                    onOpenDate = { onOpenDate(selectedPoint.date) }
+                    onOpenDate = onOpenDate?.let { cb -> { cb(selectedPoint.date) } }
                 )
             }
 
@@ -217,123 +217,139 @@ internal fun MoodTrendChartCard(
                         onSelectIndex = onSelectIndex
                     )
             ) {
-                val left = CHART_PAD_LEFT_DP.dp.toPx()
-                val right = size.width - CHART_PAD_RIGHT_DP.dp.toPx()
-                val plotInset = CHART_PLOT_INSET_DP.dp.toPx()
-                val plotLeft = left + plotInset
-                val plotRight = (right - plotInset).coerceAtLeast(plotLeft)
-                val top = CHART_PAD_TOP_DP.dp.toPx()
-                val bottom = size.height - CHART_PAD_BOTTOM_DP.dp.toPx()
-
-                // Horizontal grid & Y-axis labels (-5, -2, 0, +2, +5)
-                val yTicks = listOf(-5, -2, 0, 2, 5)
-                yTicks.forEach { tick ->
-                    val y = ChartGeometry.valueToY(tick.toDouble(), -5.0, 5.0, top, bottom)
-                    val isZero = tick == 0
-                    drawLine(
-                        color = if (isZero) {
-                            colorScheme.outline.copy(alpha = 0.55f)
-                        } else {
-                            colorScheme.outlineVariant.copy(alpha = 0.45f)
-                        },
-                        start = Offset(left, y),
-                        end = Offset(right, y),
-                        strokeWidth = if (isZero) 1.5.dp.toPx() else 1.dp.toPx()
-                    )
-                    drawAxisLabelRightAligned(
-                        textMeasurer = textMeasurer,
-                        text = formatSignedMood(tick),
-                        style = axisLabelStyle,
-                        rightX = left - 6.dp.toPx(),
-                        centerY = y
-                    )
-                }
-
-                // Vertical crosshair for selected point
-                selectedPoint?.let { point ->
-                    val selX = ChartGeometry.fractionToX(point.xFraction, plotLeft, plotRight)
-                    drawLine(
-                        color = colorScheme.primary.copy(alpha = 0.45f),
-                        start = Offset(selX, top),
-                        end = Offset(selX, bottom),
-                        strokeWidth = 1.5.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
-                    )
-                }
-
-                // Mood polyline
-                val coords = chartData.points.map { point ->
-                    Offset(
-                        x = ChartGeometry.fractionToX(point.xFraction, plotLeft, plotRight),
-                        y = ChartGeometry.valueToY(point.mood.toDouble(), -5.0, 5.0, top, bottom)
-                    )
-                }
-                if (coords.size >= 2) {
-                    val linePath = Path().apply {
-                        moveTo(coords.first().x, coords.first().y)
-                        for (i in 1 until coords.size) {
-                            lineTo(coords[i].x, coords[i].y)
-                        }
-                    }
-                    drawPath(
-                        path = linePath,
-                        color = colorScheme.primary,
-                        style = Stroke(
-                            width = 2.5.dp.toPx(),
-                            cap = StrokeCap.Round,
-                            join = StrokeJoin.Round
-                        )
-                    )
-                }
-
-                // Data points colored by semantic mood scale
-                val compact = coords.size > 35
-                val baseRadius = if (compact) 3.dp.toPx() else 4.5.dp.toPx()
-                chartData.points.forEachIndexed { idx, point ->
-                    val center = coords[idx]
-                    val isSelected = idx == selectedIndex
-                    val radius = if (isSelected) 6.5.dp.toPx() else baseRadius
-                    if (point.isMixedDay) {
-                        drawCircle(
-                            color = colorScheme.tertiary,
-                            radius = radius + 2.5.dp.toPx(),
-                            center = center,
-                            style = Stroke(width = 1.5.dp.toPx())
-                        )
-                    }
-                    if (isSelected) {
-                        drawCircle(
-                            color = colorScheme.primary.copy(alpha = 0.22f),
-                            radius = radius + 5.dp.toPx(),
-                            center = center
-                        )
-                    }
-                    drawCircle(
-                        color = moodColors.containerColor(point.mood),
-                        radius = radius,
-                        center = center
-                    )
-                    drawCircle(
-                        color = colorScheme.surfaceContainerLow,
-                        radius = radius,
-                        center = center,
-                        style = Stroke(width = 1.2.dp.toPx())
-                    )
-                }
-
-                // X-axis date ticks
-                drawXAxisDateTicks(
-                    textMeasurer = textMeasurer,
-                    ticks = chartData.xTicks,
+                drawMoodTrendCanvas(
+                    chartData = chartData,
                     referenceYear = referenceYear,
-                    style = axisLabelStyle,
-                    left = plotLeft,
-                    right = plotRight,
-                    baselineY = bottom + 6.dp.toPx()
+                    selectedIndex = selectedIndex,
+                    selectedPoint = selectedPoint,
+                    textMeasurer = textMeasurer,
+                    axisLabelStyle = axisLabelStyle,
+                    moodColors = moodColors,
+                    colorScheme = colorScheme
                 )
             }
         }
     }
+}
+
+@Suppress("LongParameterList")
+private fun DrawScope.drawMoodTrendCanvas(
+    chartData: OverviewChartData,
+    referenceYear: Int,
+    selectedIndex: Int?,
+    selectedPoint: OverviewChartPoint?,
+    textMeasurer: TextMeasurer,
+    axisLabelStyle: TextStyle,
+    moodColors: app.spectr.mood.ui.theme.MoodColorScale,
+    colorScheme: androidx.compose.material3.ColorScheme
+) {
+    val left = CHART_PAD_LEFT_DP.dp.toPx()
+    val right = size.width - CHART_PAD_RIGHT_DP.dp.toPx()
+    val plotInset = CHART_PLOT_INSET_DP.dp.toPx()
+    val plotLeft = left + plotInset
+    val plotRight = (right - plotInset).coerceAtLeast(plotLeft)
+    val top = CHART_PAD_TOP_DP.dp.toPx()
+    val bottom = size.height - CHART_PAD_BOTTOM_DP.dp.toPx()
+
+    listOf(-5, -2, 0, 2, 5).forEach { tick ->
+        val y = ChartGeometry.valueToY(tick.toDouble(), -5.0, 5.0, top, bottom)
+        val isZero = tick == 0
+        drawLine(
+            color = if (isZero) {
+                colorScheme.outline.copy(alpha = 0.55f)
+            } else {
+                colorScheme.outlineVariant.copy(alpha = 0.45f)
+            },
+            start = Offset(left, y),
+            end = Offset(right, y),
+            strokeWidth = if (isZero) 1.5.dp.toPx() else 1.dp.toPx()
+        )
+        drawAxisLabelRightAligned(
+            textMeasurer = textMeasurer,
+            text = formatSignedMood(tick),
+            style = axisLabelStyle,
+            rightX = left - 6.dp.toPx(),
+            centerY = y
+        )
+    }
+
+    selectedPoint?.let { point ->
+        val selX = ChartGeometry.fractionToX(point.xFraction, plotLeft, plotRight)
+        drawLine(
+            color = colorScheme.primary.copy(alpha = 0.45f),
+            start = Offset(selX, top),
+            end = Offset(selX, bottom),
+            strokeWidth = 1.5.dp.toPx(),
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
+        )
+    }
+
+    val coords = chartData.points.map { point ->
+        Offset(
+            x = ChartGeometry.fractionToX(point.xFraction, plotLeft, plotRight),
+            y = ChartGeometry.valueToY(point.mood.toDouble(), -5.0, 5.0, top, bottom)
+        )
+    }
+    if (coords.size >= 2) {
+        val linePath = Path().apply {
+            moveTo(coords.first().x, coords.first().y)
+            for (i in 1 until coords.size) {
+                lineTo(coords[i].x, coords[i].y)
+            }
+        }
+        drawPath(
+            path = linePath,
+            color = colorScheme.primary,
+            style = Stroke(
+                width = 2.5.dp.toPx(),
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round
+            )
+        )
+    }
+
+    val baseRadius = if (coords.size > 35) 3.dp.toPx() else 4.5.dp.toPx()
+    chartData.points.forEachIndexed { idx, point ->
+        val center = coords[idx]
+        val isSelected = idx == selectedIndex
+        val radius = if (isSelected) 6.5.dp.toPx() else baseRadius
+        if (point.isMixedDay) {
+            drawCircle(
+                color = colorScheme.tertiary,
+                radius = radius + 2.5.dp.toPx(),
+                center = center,
+                style = Stroke(width = 1.5.dp.toPx())
+            )
+        }
+        if (isSelected) {
+            drawCircle(
+                color = colorScheme.primary.copy(alpha = 0.22f),
+                radius = radius + 5.dp.toPx(),
+                center = center
+            )
+        }
+        drawCircle(
+            color = moodColors.containerColor(point.mood),
+            radius = radius,
+            center = center
+        )
+        drawCircle(
+            color = colorScheme.surfaceContainerLow,
+            radius = radius,
+            center = center,
+            style = Stroke(width = 1.2.dp.toPx())
+        )
+    }
+
+    drawXAxisDateTicks(
+        textMeasurer = textMeasurer,
+        ticks = chartData.xTicks,
+        referenceYear = referenceYear,
+        style = axisLabelStyle,
+        left = plotLeft,
+        right = plotRight,
+        baselineY = bottom + 6.dp.toPx()
+    )
 }
 
 @Composable
@@ -342,7 +358,7 @@ internal fun EnergySleepChartCard(
     referenceYear: Int,
     selectedIndex: Int?,
     onSelectIndex: (Int?) -> Unit,
-    onOpenDate: (LocalDate) -> Unit,
+    onOpenDate: ((LocalDate) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -379,7 +395,7 @@ internal fun EnergySleepChartCard(
                 EnergySleepTooltipBanner(
                     point = selectedPoint,
                     referenceYear = referenceYear,
-                    onOpenDate = { onOpenDate(selectedPoint.date) }
+                    onOpenDate = onOpenDate?.let { cb -> { cb(selectedPoint.date) } }
                 )
             }
 
@@ -522,7 +538,7 @@ internal fun AnxietyIrritabilityChartCard(
     referenceYear: Int,
     selectedIndex: Int?,
     onSelectIndex: (Int?) -> Unit,
-    onOpenDate: (LocalDate) -> Unit,
+    onOpenDate: ((LocalDate) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -561,7 +577,7 @@ internal fun AnxietyIrritabilityChartCard(
                 AnxietyIrritabilityTooltipBanner(
                     point = selectedPoint,
                     referenceYear = referenceYear,
-                    onOpenDate = { onOpenDate(selectedPoint.date) }
+                    onOpenDate = onOpenDate?.let { cb -> { cb(selectedPoint.date) } }
                 )
             }
 
@@ -688,7 +704,7 @@ private fun ChartLegendRow(items: List<Pair<Color, String>>) {
 }
 
 @Composable
-private fun MoodTooltipBanner(point: OverviewChartPoint, referenceYear: Int, onOpenDate: () -> Unit) {
+private fun MoodTooltipBanner(point: OverviewChartPoint, referenceYear: Int, onOpenDate: (() -> Unit)?) {
     val moodColors = LocalMoodColors.current
     Surface(
         shape = RoundedCornerShape(12.dp),
@@ -736,15 +752,17 @@ private fun MoodTooltipBanner(point: OverviewChartPoint, referenceYear: Int, onO
                     )
                 }
             }
-            TextButton(onClick = onOpenDate) {
-                Text(text = stringResource(R.string.overview_chart_open_day))
+            if (onOpenDate != null) {
+                TextButton(onClick = onOpenDate) {
+                    Text(text = stringResource(R.string.overview_chart_open_day))
+                }
             }
         }
     }
 }
 
 @Composable
-private fun EnergySleepTooltipBanner(point: OverviewChartPoint, referenceYear: Int, onOpenDate: () -> Unit) {
+private fun EnergySleepTooltipBanner(point: OverviewChartPoint, referenceYear: Int, onOpenDate: (() -> Unit)?) {
     val sleepLabel = point.sleepMinutes?.let { formatSleepDuration(it) }
         ?: stringResource(R.string.overview_chart_sleep_missing)
     val detailLine = buildString {
@@ -768,7 +786,7 @@ private fun EnergySleepTooltipBanner(point: OverviewChartPoint, referenceYear: I
 }
 
 @Composable
-private fun AnxietyIrritabilityTooltipBanner(point: OverviewChartPoint, referenceYear: Int, onOpenDate: () -> Unit) {
+private fun AnxietyIrritabilityTooltipBanner(point: OverviewChartPoint, referenceYear: Int, onOpenDate: (() -> Unit)?) {
     val detailLine = stringResource(R.string.overview_chart_tooltip_anxiety, point.anxiety) +
         " · " +
         stringResource(R.string.overview_chart_tooltip_irritability, point.irritability)
@@ -781,7 +799,7 @@ private fun AnxietyIrritabilityTooltipBanner(point: OverviewChartPoint, referenc
 }
 
 @Composable
-private fun TooltipBannerShell(dateLabel: String, detailLine: String, onOpenDate: () -> Unit) {
+private fun TooltipBannerShell(dateLabel: String, detailLine: String, onOpenDate: (() -> Unit)?) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -804,8 +822,10 @@ private fun TooltipBannerShell(dateLabel: String, detailLine: String, onOpenDate
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            TextButton(onClick = onOpenDate) {
-                Text(text = stringResource(R.string.overview_chart_open_day))
+            if (onOpenDate != null) {
+                TextButton(onClick = onOpenDate) {
+                    Text(text = stringResource(R.string.overview_chart_open_day))
+                }
             }
         }
     }

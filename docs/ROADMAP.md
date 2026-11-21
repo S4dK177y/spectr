@@ -36,11 +36,11 @@
   - [x] Умная отмена при заполнении, `Отложить (+1 ч)`, нейтральный текст, 14-дневное напоминание по шкалам
   - [x] Виджет `Jetpack Glance` (7-дневная полоска настроения + кнопки `+ Момент` и `Итог дня`)
 
-- [ ] **Этап 5: PDF для врача, «Режим показа врачу», справочник и локальная защита**
-  - [ ] Векторный PDF-генератор (`PdfDocument` + `FileProvider`) с выбором периода и опциями таблицы/заметок
-  - [ ] Чистый read-only «Режим показа врачу» со скрытием личных заметок
-  - [ ] Встроенный «Справочник» (шкалы и правила)
-  - [ ] Опциональная блокировка `BiometricPrompt` / PIN и `FLAG_SECURE`
+- [x] **Этап 5: PDF для врача, «Режим показа врачу», справочник и локальная защита**
+  - [x] Векторный PDF-генератор (`PdfDocument` + `FileProvider`) с выбором периода и опциями таблицы/заметок
+  - [x] Чистый read-only «Режим показа врачу» со скрытием личных заметок
+  - [x] Встроенный «Справочник» (шкалы и правила)
+  - [x] Опциональная блокировка `BiometricPrompt` / PIN и `FLAG_SECURE`
 
 - [ ] **Этап 6: Облачная синхронизация Supabase + E2EE**
   - [ ] `CryptoEngine` (PBKDF2 600k + HKDF + AES-256-GCM + AAD) + кросс-платформенные тест-векторы
@@ -64,3 +64,4 @@
 - **ADR-006 (2026-11-21):** Вкладка «Дневник» (Этап 2) построена на однонаправленном потоке данных (`StateFlow<DiaryUiState>` + `DiaryIntent`) в `@HiltViewModel DiaryViewModel` с инъекцией `java.time.Clock` для детерминированных JVM-тестов; конструктор сна переиспользует `SleepDurationCalculator` (отрезки с переходом через полночь и вычетами бодрствования + ручной ввод длительности), а живой бейдж «Смешанный день» делегирует расчёт в `AnalyticsCalculator.isMixedDay`.
 - **ADR-007 (2026-11-21):** Вкладки «Обзор» и «Шкалы» (Этап 3) выносят расчёт координат графиков (`ChartGeometry`, `OverviewChartData`, `ScaleTrendPoint`) и построение сетки календаря Пн–Вс (`CalendarMonthBuilder`) в чистый Kotlin-слой `domain/` для переиспользования в PDF-генераторе (Этап 5) и быстрого покрытия JVM-тестами; три интерактивных векторных графика (`Настроение`, `Энергия + Сон с порогом < 6 ч`, `Тревога + Раздражительность`) и график динамики шкал реализованы на нативном Compose `Canvas` с `TextMeasurer` и горизонтальным скраббингом без перехвата вертикальной прокрутки.
 - **ADR-008 (2026-11-21):** Надёжные уведомления и виджет (Этап 4) выносят расчёт триггеров, умной отмены, 14-дневного интервала шкал и снапшота 7-дневной полоски (`ReminderSchedulerCalculator`, `MoodWidgetSnapshotBuilder`) в чистый Kotlin-слой `domain/`; локальные мутации Room уведомляют платформу через `LocalDataChangeHook` (`dagger.Lazy<ReminderCoordinator>` + `MoodWidgetUpdater` без циклов DI), будильники планируются через `AlarmManager.setExactAndAllowWhileIdle` (с Doze-safe fallback при отсутствии `SCHEDULE_EXACT_ALARM`) и восстанавливаются в `ReminderBootReceiver` (`BOOT_COMPLETED`, `MY_PACKAGE_REPLACED`, `TIME_SET`, `TIMEZONE_CHANGED`, `ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED`), уведомления используют `VISIBILITY_PRIVATE` + нейтральный `publicVersion` на экране блокировки, а виджет реализован на `Jetpack Glance 1.1.1` с прямыми deep-link переходами (`+ Момент` и `Итог дня`) через `singleTop` `MainActivity`.
+- **ADR-009 (2026-11-21):** Отчётность для врача, «Справочник» и локальная защита (Этап 5) выносят сборку и санитизацию данных отчёта (`DoctorReportBuilder`, `DoctorReportSnapshot`) и тайм-ауты автоблокировки (`SecurityConfig`) в чистый Kotlin-слой `domain/` (с принудительным вырезанием `note`, `sleepNote` и `MomentCheckIn` при `includePersonalNotesAndMoments = false`); нативный векторный `DoctorPdfReportGenerator` (`android.graphics.pdf.PdfDocument` + `FileProvider`) переиспользует `ChartGeometry`, `CalendarMonthBuilder` и `MoodColorScale.Light` для рендера A4-сводки (стр. 1: 14 KPI, ключевые маркеры, PHQ-9/GAD-7/ASRM авто и подтверждённые, календарь, 3 графика) и опциональных страниц 2+ (таблица по дням и/или заметки); «Режим показа врачу» (`DoctorViewScreen`) изолирован от навигации в «Дневник» и любых действий редактирования, а локальная защита сочетает `PinHashManager` (`PBKDF2WithHmacSHA256`, 100 000 итераций, 16-байтная соль, constant-time `MessageDigest.isEqual`), платформенный `android.hardware.biometrics.BiometricPrompt` (`BiometricLockManager`, без лишних внешних зависимостей) и `WindowManager.LayoutParams.FLAG_SECURE`.
