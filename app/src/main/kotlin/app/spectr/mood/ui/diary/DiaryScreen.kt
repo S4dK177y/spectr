@@ -47,10 +47,19 @@ import java.time.ZoneOffset
 fun DiaryRoute(
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
+    requestedDate: LocalDate? = null,
+    onRequestedDateConsumed: () -> Unit = {},
     viewModel: DiaryViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarText = state.snackbarMessage?.let { snackbarMessageText(it) }
+
+    LaunchedEffect(requestedDate) {
+        if (requestedDate != null) {
+            viewModel.onIntent(DiaryIntent.SelectDate(requestedDate))
+            onRequestedDateConsumed()
+        }
+    }
 
     LaunchedEffect(state.snackbarMessage, snackbarText) {
         if (state.snackbarMessage != null && snackbarText != null) {

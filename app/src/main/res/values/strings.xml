@@ -7,11 +7,179 @@
     <string name="tab_scales">Шкалы</string>
     <string name="tab_more">Ещё</string>
 
-    <!-- Stage placeholders for upcoming tabs -->
-    <string name="overview_shell_title">Календарь и графики</string>
-    <string name="overview_shell_subtitle">Помесячный календарь, 3 векторных графика и 14 KPI-метрик подключатся на Этапе 3.</string>
-    <string name="scales_shell_title">Клинические шкалы</string>
-    <string name="scales_shell_subtitle">Авторасчёт PHQ-9 (14 дн.), GAD-7 (14 дн.) и ASRM (7 дн.) + история подтверждённых замеров появятся на Этапе 3.</string>
+    <!-- Overview tab: Calendar -->
+    <string name="overview_calendar_title">Календарь настроения</string>
+    <string name="overview_calendar_prev_month_cd">Предыдущий месяц</string>
+    <string name="overview_calendar_next_month_cd">Следующий месяц</string>
+    <string name="overview_calendar_pick_month_cd">Выбрать месяц и год</string>
+    <string name="overview_calendar_today_chip">Сегодня</string>
+    <string name="overview_calendar_filled_badge">%1$d дн.</string>
+    <string name="overview_calendar_tap_hint">Нажмите на день, чтобы открыть или заполнить запись</string>
+    <string name="overview_calendar_mixed_legend">Точка — смешанный день</string>
+    <string name="overview_month_picker_title">Месяц и год</string>
+    <string name="overview_month_picker_prev_year_cd">Предыдущий год</string>
+    <string name="overview_month_picker_next_year_cd">Следующий год</string>
+    <string name="weekday_mon_short">Пн</string>
+    <string name="weekday_tue_short">Вт</string>
+    <string name="weekday_wed_short">Ср</string>
+    <string name="weekday_thu_short">Чт</string>
+    <string name="weekday_fri_short">Пт</string>
+    <string name="weekday_sat_short">Сб</string>
+    <string name="weekday_sun_short">Вс</string>
+
+    <!-- Overview tab: Period selector & charts -->
+    <string name="overview_period_section_title">Динамика и графики</string>
+    <string name="overview_period_14d">14 дн.</string>
+    <string name="overview_period_30d">30 дн.</string>
+    <string name="overview_period_90d">90 дн.</string>
+    <string name="overview_period_all">Всё время</string>
+    <string name="overview_period_range_summary">%1$s — %2$s · %3$d дн.</string>
+    <string name="overview_period_single_day_summary">%1$s · 1 дн.</string>
+    <string name="overview_period_empty_summary">Нет записей за выбранный период</string>
+    <string name="overview_charts_touch_hint">Нажмите или проведите по графику для просмотра дня</string>
+    <string name="overview_charts_empty_title">Пока нет данных за период</string>
+    <string name="overview_charts_empty_body">Добавьте записи на вкладке «Дневник», и здесь появятся графики и сводка KPI.</string>
+    <string name="overview_chart_mood_title">Настроение (−5 .. +5)</string>
+    <string name="overview_chart_mood_mixed_tag">Смешанный</string>
+    <string name="overview_chart_energy_sleep_title">Энергия (0–10) и сон (ч)</string>
+    <string name="overview_chart_legend_energy">Энергия</string>
+    <string name="overview_chart_legend_sleep">Сон</string>
+    <string name="overview_chart_legend_short_sleep">Недосып &lt; 6 ч</string>
+    <string name="overview_chart_sleep_missing">Сон не указан</string>
+    <string name="overview_chart_anxiety_irritability_title">Тревога и раздражительность (0–10)</string>
+    <string name="overview_chart_legend_anxiety">Тревога</string>
+    <string name="overview_chart_legend_irritability">Раздраж.</string>
+    <string name="overview_chart_legend_high_threshold">Порог ≥ 7</string>
+    <string name="overview_chart_tooltip_energy">Энергия %1$d/10</string>
+    <string name="overview_chart_tooltip_sleep">Сон %1$s</string>
+    <string name="overview_chart_tooltip_anxiety">Тревога %1$d/10</string>
+    <string name="overview_chart_tooltip_irritability">Раздраж. %1$d/10</string>
+    <string name="overview_chart_open_day">Открыть</string>
+
+    <!-- Overview tab: 14 KPI metrics & key markers -->
+    <string name="overview_kpi_section_title">Сводка KPI (14 метрик)</string>
+    <string name="overview_kpi_filled_days">Заполнено дней</string>
+    <string name="overview_kpi_avg_mood">Среднее настроение</string>
+    <string name="overview_kpi_mood_range">Размах мин / макс</string>
+    <string name="overview_kpi_mood_span_sub">амплитуда %1$d</string>
+    <string name="overview_kpi_mood_split">Спад / норма / подъём</string>
+    <string name="overview_kpi_mood_split_sub">−1 и ниже · 0 · +1 и выше</string>
+    <string name="overview_kpi_avg_energy">Средняя энергия</string>
+    <string name="overview_kpi_avg_sleep">Средний сон</string>
+    <string name="overview_kpi_sleep_tracked_sub">указан за %1$d дн.</string>
+    <string name="overview_kpi_avg_anxiety">Средняя тревога</string>
+    <string name="overview_kpi_avg_irritability">Средняя раздраж.</string>
+    <string name="overview_kpi_marked_low">Выраженный спад</string>
+    <string name="overview_kpi_marked_low_sub">настроение ≤ −2</string>
+    <string name="overview_kpi_marked_high">Выраженный подъём</string>
+    <string name="overview_kpi_marked_high_sub">настроение ≥ +2</string>
+    <string name="overview_kpi_mixed_days">Смешанные дни</string>
+    <string name="overview_kpi_mixed_days_sub">спад + активация</string>
+    <string name="overview_kpi_short_sleep">Недосып (&lt; 6 ч)</string>
+    <string name="overview_kpi_swings">Качели внутри дня</string>
+    <string name="overview_kpi_high_anx_irr">Выс. тревога / раздраж.</string>
+    <string name="overview_kpi_high_anx_irr_sub">≥ 7 · Тр %1$d · Рз %2$d</string>
+    <string name="overview_kpi_days_value">%1$d дн.</string>
+    <string name="overview_kpi_out_of_ten">%1$s / 10</string>
+    <string name="overview_kpi_hours_value">%1$s ч</string>
+    <string name="overview_kpi_dash">—</string>
+
+    <string name="overview_markers_section_title">Ключевые маркеры</string>
+    <string name="overview_marker_alcohol">Алкоголь</string>
+    <string name="overview_marker_alcohol_stress_sub">на стрессе: %1$d</string>
+    <string name="overview_marker_med_side_effects">Побочки лекарств</string>
+    <string name="overview_marker_med_missed_sub">пропуски: %1$d</string>
+
+    <!-- Scales tab: Header, auto-scales & severity bands -->
+    <string name="scales_disclaimer">Показатели носят справочный характер для наблюдения в динамике и обсуждения со специалистом. Приложение не ставит диагнозов.</string>
+    <string name="scales_auto_section_title">Авторасчёт по дневнику</string>
+    <string name="scales_window_days">%1$d дн.</string>
+    <string name="scales_coverage_summary">Окно %1$s — %2$s · заполнено %3$d из %4$d дн.</string>
+    <string name="scales_empty_diary_hint">Заполните хотя бы один день в «Дневнике» для авторасчёта — либо пройдите опросник вручную ниже.</string>
+    <string name="scales_score_of_max">%1$d / %2$d</string>
+    <string name="scales_latest_confirmed">Последний замер (%1$s): %2$d / %3$d · %4$s</string>
+    <string name="scales_show_breakdown">Разбор по пунктам</string>
+    <string name="scales_hide_breakdown">Скрыть разбор</string>
+    <string name="scales_item_days_ratio">%1$d/%2$d дн.</string>
+    <string name="scales_confirm_button">Сверить и сохранить замер</string>
+
+    <string name="scale_phq9_code">PHQ-9</string>
+    <string name="scale_phq9_subtitle">Сниженный фон и апатия</string>
+    <string name="scale_gad7_code">GAD-7</string>
+    <string name="scale_gad7_subtitle">Уровень тревоги и напряжения</string>
+    <string name="scale_asrm_code">ASRM</string>
+    <string name="scale_asrm_subtitle">Повышенная активация</string>
+
+    <!-- Severity labels (clinically neutral) -->
+    <string name="severity_phq9_minimal">Минимальный</string>
+    <string name="severity_phq9_mild">Лёгкий</string>
+    <string name="severity_phq9_moderate">Умеренный</string>
+    <string name="severity_phq9_moderately_severe">Умеренно-тяжёлый</string>
+    <string name="severity_phq9_severe">Выраженный</string>
+
+    <string name="severity_gad7_minimal">Минимальная</string>
+    <string name="severity_gad7_mild">Лёгкая</string>
+    <string name="severity_gad7_moderate">Умеренная</string>
+    <string name="severity_gad7_severe">Выраженная</string>
+
+    <string name="severity_asrm_normal">Обычный фон</string>
+    <string name="severity_asrm_elevated">Повышенная активация</string>
+
+    <!-- PHQ-9 items (0..3, 14 days) -->
+    <string name="phq9_q1">Слабый интерес или удовольствие от привычных дел</string>
+    <string name="phq9_q2">Подавленность, сниженный фон или ощущение безнадёжности</string>
+    <string name="phq9_q3">Трудности с засыпанием, прерывистый или избыточный сон</string>
+    <string name="phq9_q4">Усталость или выраженный недостаток энергии</string>
+    <string name="phq9_q5">Сниженный аппетит или переедание / пищевые срывы</string>
+    <string name="phq9_q6">Чрезмерная самокритика, чувство вины или несостоятельности</string>
+    <string name="phq9_q7">Трудности с концентрацией внимания и ясностью мыслей</string>
+    <string name="phq9_q8">Заметная заторможенность или, наоборот, внутреннее беспокойство и суетливость</string>
+    <string name="phq9_q9">Мысли о смерти или о том, чтобы причинить себе вред</string>
+
+    <!-- GAD-7 items (0..3, 14 days) -->
+    <string name="gad7_q1">Нервозность, тревога или ощущение напряжения на грани</string>
+    <string name="gad7_q2">Невозможность остановить или контролировать беспокойство</string>
+    <string name="gad7_q3">Чрезмерное переживание по поводу самых разных дел</string>
+    <string name="gad7_q4">Трудности с тем, чтобы расслабиться</string>
+    <string name="gad7_q5">Сильное внутреннее беспокойство, трудно усидеть на месте</string>
+    <string name="gad7_q6">Повышенная раздражительность или вспыльчивость</string>
+    <string name="gad7_q7">Ощущение страха, будто может случиться что-то плохое</string>
+
+    <!-- ASRM items (0..4, 7 days) -->
+    <string name="asrm_q1">Заметно более приподнятое или радостное настроение, чем обычно</string>
+    <string name="asrm_q2">Повышенная уверенность в себе по сравнению с обычным уровнем</string>
+    <string name="asrm_q3">Меньшая потребность во сне при сохранении высокой бодрости</string>
+    <string name="asrm_q4">Более быстрая речь, ускоренный поток мыслей или стремление много говорить</string>
+    <string name="asrm_q5">Заметно более высокая активность, гиперфиксация на делах и идеях</string>
+
+    <!-- Answer legends -->
+    <string name="scales_legend_phq_gad">0 — Ни разу · 1 — Несколько дней · 2 — &gt; половины дней · 3 — Почти каждый день</string>
+    <string name="scales_legend_asrm">0 — Как обычно · 1 — Чуть чаще · 2 — Заметно чаще · 3 — Большую часть дней · 4 — Постоянно</string>
+
+    <!-- Scales confirmation sheet -->
+    <string name="scales_sheet_new_title">Подтверждение %1$s</string>
+    <string name="scales_sheet_edit_title">Замер %1$s</string>
+    <string name="scales_sheet_date_label">Дата замера</string>
+    <string name="scales_sheet_reset_auto">К авторасчёту</string>
+    <string name="scales_sheet_auto_hint">Из дневника: %1$d (%2$d из %3$d дн.)</string>
+    <string name="scales_sheet_total_label">Итог: %1$d / %2$d · %3$s</string>
+    <string name="scales_sheet_save_button">Сохранить подтверждённый замер</string>
+    <string name="scales_sheet_update_button">Обновить замер</string>
+    <string name="scales_sheet_delete_button">Удалить замер</string>
+
+    <!-- Scales history & trend -->
+    <string name="scales_history_section_title">История подтверждённых замеров</string>
+    <string name="scales_filter_all">Все</string>
+    <string name="scales_trend_title">Динамика %1$s</string>
+    <string name="scales_trend_need_more">Сохраните хотя бы 2 подтверждённых замера %1$s, чтобы увидеть линию динамики.</string>
+    <string name="scales_history_empty_title">Подтверждённых замеров пока нет</string>
+    <string name="scales_history_empty_body">Нажмите «Сверить и сохранить замер» на любой шкале выше, чтобы зафиксировать точку для отслеживания динамики и PDF-отчёта.</string>
+    <string name="scales_delete_dialog_title">Удалить замер %1$s?</string>
+    <string name="scales_delete_dialog_body">Подтверждённый замер от %1$s (%2$d / %3$d) будет удалён из истории.</string>
+    <string name="scales_delete_cd">Удалить замер</string>
+    <string name="scales_snackbar_saved">Подтверждённый замер сохранён</string>
+    <string name="scales_snackbar_updated">Замер обновлён</string>
+    <string name="scales_snackbar_deleted">Замер удалён</string>
 
     <!-- Diary: Date switcher & header -->
     <string name="diary_yesterday">Вчера</string>

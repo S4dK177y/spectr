@@ -6,7 +6,7 @@
 
 ## 1. Слои и пакеты (`app.spectr.mood`)
 
-- `domain/` — чистый Kotlin (без `android.*`, Room и Supabase). Модели, калькуляторы (`ClinicalScaleCalculator`, `SleepDurationCalculator`, `AnalyticsCalculator`), интерфейсы репозиториев, формат JSON-бэкапа.
+- `domain/` — чистый Kotlin (без `android.*`, Room и Supabase). Модели, калькуляторы (`ClinicalScaleCalculator`, `SleepDurationCalculator`, `AnalyticsCalculator`), геометрия графиков и календарная сетка (`ChartGeometry`, `CalendarMonthBuilder`), интерфейсы репозиториев, формат JSON-бэкапа.
 - `data/local/` — Room SQLite (offline-first источник правды) + DataStore (настройки тем, уведомлений, приватности, sync-курсора).
 - `data/remote/` — `supabase-kt` 3.x (`auth-kt`, `postgrest-kt`) + WorkManager `SyncWorker` (delta-sync по `updated_at`, разрешение конфликтов Last-Write-Wins по UTC timestamp).
 - `security/` — `CryptoEngine`, `KeystoreManager`, `RecoveryKeyCodec`, `BiometricLockManager`.

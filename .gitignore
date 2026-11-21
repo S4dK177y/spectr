@@ -1,6 +1,7 @@
 # Gradle & Build outputs
 *.iml
 .gradle/
+.kotlin/
 /build/
 app/build/
 /captures/

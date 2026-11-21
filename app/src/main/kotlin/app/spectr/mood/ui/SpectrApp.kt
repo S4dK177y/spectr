@@ -52,7 +52,14 @@ import app.spectr.mood.ui.diary.DiaryRoute
 import app.spectr.mood.ui.diary.DiaryScreen
 import app.spectr.mood.ui.diary.sampleDiaryPreviewState
 import app.spectr.mood.ui.navigation.SpectrDestination
+import app.spectr.mood.ui.overview.OverviewRoute
+import app.spectr.mood.ui.overview.OverviewScreen
+import app.spectr.mood.ui.overview.sampleOverviewPreviewState
+import app.spectr.mood.ui.scales.ScalesRoute
+import app.spectr.mood.ui.scales.ScalesScreen
+import app.spectr.mood.ui.scales.sampleScalesPreviewState
 import app.spectr.mood.ui.theme.SpectrTheme
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,12 +68,29 @@ fun SpectrApp(
     onThemeModeChange: (ThemeMode) -> Unit,
     onThemePaletteChange: (ThemePalette) -> Unit,
     modifier: Modifier = Modifier,
-    diaryContent: @Composable (SnackbarHostState) -> Unit = { hostState ->
-        DiaryRoute(snackbarHostState = hostState)
+    diaryContent: @Composable (SnackbarHostState, LocalDate?, () -> Unit) -> Unit =
+        { hostState, requestedDate, onConsumed ->
+            DiaryRoute(
+                snackbarHostState = hostState,
+                requestedDate = requestedDate,
+                onRequestedDateConsumed = onConsumed
+            )
+        },
+    overviewContent: @Composable ((LocalDate) -> Unit) -> Unit = { onOpenDiaryDate ->
+        OverviewRoute(onOpenDiaryDate = onOpenDiaryDate)
+    },
+    scalesContent: @Composable (SnackbarHostState) -> Unit = { hostState ->
+        ScalesRoute(snackbarHostState = hostState)
     }
 ) {
     var currentTab by rememberSaveable { mutableStateOf(SpectrDestination.DIARY) }
+    var requestedDiaryDateIso by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val openDiaryDate: (LocalDate) -> Unit = { date ->
+        requestedDiaryDateIso = date.toString()
+        currentTab = SpectrDestination.DIARY
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -113,15 +137,12 @@ fun SpectrApp(
                 .padding(innerPadding)
         ) { tab ->
             when (tab) {
-                SpectrDestination.DIARY -> diaryContent(snackbarHostState)
-                SpectrDestination.OVERVIEW -> StagePlaceholderScreen(
-                    title = stringResource(R.string.overview_shell_title),
-                    subtitle = stringResource(R.string.overview_shell_subtitle)
-                )
-                SpectrDestination.SCALES -> StagePlaceholderScreen(
-                    title = stringResource(R.string.scales_shell_title),
-                    subtitle = stringResource(R.string.scales_shell_subtitle)
-                )
+                SpectrDestination.DIARY -> diaryContent(
+                    snackbarHostState,
+                    requestedDiaryDateIso?.let(LocalDate::parse)
+                ) { requestedDiaryDateIso = null }
+                SpectrDestination.OVERVIEW -> overviewContent(openDiaryDate)
+                SpectrDestination.SCALES -> scalesContent(snackbarHostState)
                 SpectrDestination.MORE -> MoreShellScreen(
                     themeConfig = themeConfig,
                     onThemeModeChange = onThemeModeChange,
@@ -129,28 +150,6 @@ fun SpectrApp(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun StagePlaceholderScreen(title: String, subtitle: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }
 
@@ -325,7 +324,11 @@ private fun SpectrAppLightPreview() {
             themeConfig = ThemeConfig(mode = ThemeMode.LIGHT, palette = ThemePalette.SOFT_SLATE),
             onThemeModeChange = {},
             onThemePaletteChange = {},
-            diaryContent = { DiaryScreen(state = sampleDiaryPreviewState(), onIntent = {}) }
+            diaryContent = { _, _, _ -> DiaryScreen(state = sampleDiaryPreviewState(), onIntent = {}) },
+            overviewContent = {
+                OverviewScreen(state = sampleOverviewPreviewState(), onIntent = {}, onOpenDiaryDate = {})
+            },
+            scalesContent = { ScalesScreen(state = sampleScalesPreviewState(), onIntent = {}) }
         )
     }
 }
@@ -340,7 +343,11 @@ private fun SpectrAppAmoledPreview() {
             themeConfig = ThemeConfig(mode = ThemeMode.AMOLED, palette = ThemePalette.WARM_PAPER),
             onThemeModeChange = {},
             onThemePaletteChange = {},
-            diaryContent = { DiaryScreen(state = sampleDiaryPreviewState(), onIntent = {}) }
+            diaryContent = { _, _, _ -> DiaryScreen(state = sampleDiaryPreviewState(), onIntent = {}) },
+            overviewContent = {
+                OverviewScreen(state = sampleOverviewPreviewState(), onIntent = {}, onOpenDiaryDate = {})
+            },
+            scalesContent = { ScalesScreen(state = sampleScalesPreviewState(), onIntent = {}) }
         )
     }
 }
