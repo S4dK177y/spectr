@@ -1,6 +1,9 @@
 package app.spectr.mood.ui.scales
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -36,10 +39,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -58,6 +65,7 @@ import app.spectr.mood.domain.chart.ChartGeometry
 import app.spectr.mood.domain.chart.ScaleTrendPoint
 import app.spectr.mood.domain.model.ScaleAssessment
 import app.spectr.mood.domain.model.ScaleType
+import app.spectr.mood.ui.components.EmptyScalesVectorIllustration
 import app.spectr.mood.ui.overview.drawAxisLabelRightAligned
 import app.spectr.mood.ui.overview.drawXAxisDateTicks
 import app.spectr.mood.ui.overview.formatShortChartDate
@@ -68,6 +76,7 @@ private const val TREND_PAD_RIGHT_DP = 14f
 private const val TREND_PLOT_INSET_DP = 10f
 private const val TREND_PAD_TOP_DP = 12f
 private const val TREND_PAD_BOTTOM_DP = 24f
+private val TREND_THRESHOLD_DASH = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
 
 @Composable
 internal fun ScalesDisclaimerCard(modifier: Modifier = Modifier) {
@@ -190,8 +199,13 @@ internal fun AutoScaleCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                val animatedProgress by animateFloatAsState(
+                    targetValue = (autoResult.totalScore.toFloat() / maxScore.toFloat()).coerceIn(0f, 1f),
+                    animationSpec = tween(durationMillis = 320),
+                    label = "scale_auto_progress"
+                )
                 LinearProgressIndicator(
-                    progress = { (autoResult.totalScore.toFloat() / maxScore.toFloat()).coerceIn(0f, 1f) },
+                    progress = { animatedProgress },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(8.dp)
@@ -375,7 +389,11 @@ internal fun ScaleTrendChartCard(
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
         shape = RoundedCornerShape(20.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .animateContentSize(animationSpec = tween(180))
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -441,9 +459,11 @@ internal fun ScaleTrendChartCard(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                val fractions = points.map { it.xFraction }
-                val thresholds = scaleThresholdLines(scaleType)
-                val xTicks = buildTrendTicks(points)
+                val fractions = remember(points) { points.map { it.xFraction } }
+                val thresholds = remember(scaleType) { scaleThresholdLines(scaleType) }
+                val xTicks = remember(points) { buildTrendTicks(points) }
+                val linePath = remember { Path() }
+                val fillPath = remember { Path() }
 
                 Canvas(
                     modifier = Modifier
@@ -507,7 +527,7 @@ internal fun ScaleTrendChartCard(
                             start = Offset(left, y),
                             end = Offset(right, y),
                             strokeWidth = 1.dp.toPx(),
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
+                            pathEffect = TREND_THRESHOLD_DASH
                         )
                         drawAxisLabelRightAligned(
                             textMeasurer = textMeasurer,
@@ -531,14 +551,28 @@ internal fun ScaleTrendChartCard(
                         )
                     }
 
-                    val path = Path().apply {
-                        moveTo(coords.first().x, coords.first().y)
-                        for (i in 1 until coords.size) {
-                            lineTo(coords[i].x, coords[i].y)
-                        }
+                    linePath.rewind()
+                    fillPath.rewind()
+                    linePath.moveTo(coords.first().x, coords.first().y)
+                    fillPath.moveTo(coords.first().x, bottom)
+                    fillPath.lineTo(coords.first().x, coords.first().y)
+                    for (i in 1 until coords.size) {
+                        linePath.lineTo(coords[i].x, coords[i].y)
+                        fillPath.lineTo(coords[i].x, coords[i].y)
                     }
+                    fillPath.lineTo(coords.last().x, bottom)
+                    fillPath.close()
+
                     drawPath(
-                        path = path,
+                        path = fillPath,
+                        brush = Brush.verticalGradient(
+                            colors = listOf(colorScheme.primary.copy(alpha = 0.16f), Color.Transparent),
+                            startY = top,
+                            endY = bottom
+                        )
+                    )
+                    drawPath(
+                        path = linePath,
                         color = colorScheme.primary,
                         style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
                     )
@@ -586,8 +620,9 @@ internal fun ScaleHistoryEmptyCard(modifier: Modifier = Modifier) {
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            EmptyScalesVectorIllustration()
             Text(
                 text = stringResource(R.string.scales_history_empty_title),
                 style = MaterialTheme.typography.titleMedium,

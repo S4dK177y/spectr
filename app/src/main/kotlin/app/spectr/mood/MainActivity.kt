@@ -14,10 +14,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +39,7 @@ import app.spectr.mood.security.BiometricAvailability
 import app.spectr.mood.security.BiometricLockManager
 import app.spectr.mood.security.PinHashManager
 import app.spectr.mood.ui.SpectrApp
+import app.spectr.mood.ui.onboarding.OnboardingScreen
 import app.spectr.mood.ui.security.AppLockScreen
 import app.spectr.mood.ui.theme.SpectrTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -100,111 +104,136 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            val themeConfig by themeRepository.themeConfig.collectAsStateWithLifecycle(
-                initialValue = ThemeConfig()
-            )
-            val securityConfig by securitySettingsRepository.securityConfig.collectAsStateWithLifecycle(
-                initialValue = null
-            )
-            val isLocked by isLockedFlow.collectAsStateWithLifecycle()
-            val launchRequest by launchRequestFlow.collectAsStateWithLifecycle()
-            val coroutineScope = rememberCoroutineScope()
-            val darkTheme = themeConfig.isDark(isSystemInDarkTheme())
-            var biometricError by remember { mutableStateOf<String?>(null) }
+            MainActivityRootContent()
+        }
+    }
 
-            LaunchedEffect(darkTheme) {
-                enableEdgeToEdge(
-                    statusBarStyle = SystemBarStyle.auto(
-                        lightScrim = Color.TRANSPARENT,
-                        darkScrim = Color.TRANSPARENT
-                    ) { darkTheme },
-                    navigationBarStyle = SystemBarStyle.auto(
-                        lightScrim = Color.TRANSPARENT,
-                        darkScrim = Color.TRANSPARENT
-                    ) { darkTheme }
-                )
+    @Composable
+    private fun MainActivityRootContent() {
+        val themeConfig by themeRepository.themeConfig.collectAsStateWithLifecycle(
+            initialValue = ThemeConfig()
+        )
+        val onboardingCompleted by themeRepository.onboardingCompleted.collectAsStateWithLifecycle(
+            initialValue = null
+        )
+        val securityConfig by securitySettingsRepository.securityConfig.collectAsStateWithLifecycle(
+            initialValue = null
+        )
+        val isLocked by isLockedFlow.collectAsStateWithLifecycle()
+        val launchRequest by launchRequestFlow.collectAsStateWithLifecycle()
+        val coroutineScope = rememberCoroutineScope()
+        val darkTheme = themeConfig.isDark(isSystemInDarkTheme())
+        var biometricError by remember { mutableStateOf<String?>(null) }
+
+        LaunchedEffect(darkTheme) {
+            enableEdgeToEdge(
+                statusBarStyle = SystemBarStyle.auto(
+                    lightScrim = Color.TRANSPARENT,
+                    darkScrim = Color.TRANSPARENT
+                ) { darkTheme },
+                navigationBarStyle = SystemBarStyle.auto(
+                    lightScrim = Color.TRANSPARENT,
+                    darkScrim = Color.TRANSPARENT
+                ) { darkTheme }
+            )
+        }
+
+        LaunchedEffect(securityConfig) {
+            val cfg = securityConfig ?: return@LaunchedEffect
+            latestSecurityConfig = cfg
+            applyScreenSecurityFlag(cfg.isScreenSecurityEnabled)
+            if (!hasEvaluatedColdStartLock) {
+                hasEvaluatedColdStartLock = true
+                isLockedFlow.value = cfg.isLockActive
+            } else if (!cfg.isLockActive) {
+                isLockedFlow.value = false
             }
+        }
 
-            LaunchedEffect(securityConfig) {
-                val cfg = securityConfig ?: return@LaunchedEffect
-                latestSecurityConfig = cfg
-                applyScreenSecurityFlag(cfg.isScreenSecurityEnabled)
-                if (!hasEvaluatedColdStartLock) {
-                    hasEvaluatedColdStartLock = true
-                    isLockedFlow.value = cfg.isLockActive
-                } else if (!cfg.isLockActive) {
+        val triggerBiometric: () -> Unit = {
+            biometricError = null
+            activeBiometricSignal?.cancel()
+            activeBiometricSignal = biometricLockManager.authenticate(
+                activity = this@MainActivity,
+                title = getString(R.string.biometric_prompt_title),
+                subtitle = getString(R.string.biometric_prompt_subtitle),
+                negativeButtonText = getString(R.string.biometric_prompt_negative),
+                onSuccess = {
+                    activeBiometricSignal = null
+                    biometricError = null
+                    wasDeviceScreenLocked = false
                     isLockedFlow.value = false
+                },
+                onError = { message ->
+                    activeBiometricSignal = null
+                    biometricError = message
                 }
+            )
+        }
+
+        val canUseBiometric = securityConfig?.isBiometricEnabled == true &&
+            biometricLockManager.checkAvailability() == BiometricAvailability.AVAILABLE
+
+        LaunchedEffect(isLocked, canUseBiometric) {
+            if (isLocked && canUseBiometric) {
+                triggerBiometric()
             }
+        }
 
-            val triggerBiometric: () -> Unit = {
-                biometricError = null
-                activeBiometricSignal?.cancel()
-                activeBiometricSignal = biometricLockManager.authenticate(
-                    activity = this@MainActivity,
-                    title = getString(R.string.biometric_prompt_title),
-                    subtitle = getString(R.string.biometric_prompt_subtitle),
-                    negativeButtonText = getString(R.string.biometric_prompt_negative),
-                    onSuccess = {
-                        activeBiometricSignal = null
-                        biometricError = null
-                        wasDeviceScreenLocked = false
-                        isLockedFlow.value = false
-                    },
-                    onError = { message ->
-                        activeBiometricSignal = null
-                        biometricError = message
-                    }
-                )
-            }
-
-            val canUseBiometric = securityConfig?.isBiometricEnabled == true &&
-                biometricLockManager.checkAvailability() == BiometricAvailability.AVAILABLE
-
-            LaunchedEffect(isLocked, canUseBiometric) {
-                if (isLocked && canUseBiometric) {
-                    triggerBiometric()
+        SpectrTheme(themeConfig = themeConfig) {
+            when {
+                securityConfig == null || onboardingCompleted == null -> {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {}
                 }
-            }
-
-            SpectrTheme(themeConfig = themeConfig) {
-                when {
-                    securityConfig == null -> {
-                        Surface(
-                            modifier = Modifier.fillMaxSize(),
-                            color = MaterialTheme.colorScheme.background
-                        ) {}
-                    }
-                    isLocked -> {
-                        AppLockScreen(
-                            biometricEnabled = canUseBiometric,
-                            onVerifyPin = { candidate -> verifyStoredPin(candidate) },
-                            onTriggerBiometric = triggerBiometric,
-                            onUnlocked = {
-                                biometricError = null
-                                wasDeviceScreenLocked = false
-                                isLockedFlow.value = false
-                            },
-                            biometricErrorMessage = biometricError
-                        )
-                    }
-                    else -> {
-                        SpectrApp(
-                            themeConfig = themeConfig,
-                            onThemeModeChange = { mode ->
-                                coroutineScope.launch { themeRepository.setThemeMode(mode) }
-                            },
-                            onThemePaletteChange = { palette ->
-                                coroutineScope.launch { themeRepository.setThemePalette(palette) }
-                            },
-                            launchRequest = launchRequest,
-                            onLaunchRequestConsumed = { launchRequestFlow.value = null },
-                            onLockAppNow = {
-                                if (latestSecurityConfig?.isLockActive == true) {
-                                    isLockedFlow.value = true
+                isLocked -> {
+                    AppLockScreen(
+                        biometricEnabled = canUseBiometric,
+                        onVerifyPin = { candidate -> verifyStoredPin(candidate) },
+                        onTriggerBiometric = triggerBiometric,
+                        onUnlocked = {
+                            biometricError = null
+                            wasDeviceScreenLocked = false
+                            isLockedFlow.value = false
+                        },
+                        biometricErrorMessage = biometricError
+                    )
+                }
+                else -> {
+                    Crossfade(
+                        targetState = onboardingCompleted == true,
+                        animationSpec = tween(durationMillis = 280),
+                        label = "spectr_onboarding_crossfade"
+                    ) { completed ->
+                        if (!completed) {
+                            OnboardingScreen(
+                                isFirstLaunch = true,
+                                onFinish = {
+                                    coroutineScope.launch {
+                                        themeRepository.setOnboardingCompleted(true)
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        } else {
+                            SpectrApp(
+                                themeConfig = themeConfig,
+                                onThemeModeChange = { mode ->
+                                    coroutineScope.launch { themeRepository.setThemeMode(mode) }
+                                },
+                                onThemePaletteChange = { palette ->
+                                    coroutineScope.launch { themeRepository.setThemePalette(palette) }
+                                },
+                                launchRequest = launchRequest,
+                                onLaunchRequestConsumed = { launchRequestFlow.value = null },
+                                onLockAppNow = {
+                                    if (latestSecurityConfig?.isLockActive == true) {
+                                        isLockedFlow.value = true
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }

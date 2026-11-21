@@ -1,7 +1,18 @@
 package app.spectr.mood.ui
 
-import androidx.activity.compose.BackHandler
+import androidx.activity.BackEventCompat
+import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -17,20 +28,26 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import app.spectr.mood.R
 import app.spectr.mood.domain.model.ThemeConfig
 import app.spectr.mood.domain.model.ThemeMode
 import app.spectr.mood.domain.model.ThemePalette
 import app.spectr.mood.platform.SpectrLaunchRequest
 import app.spectr.mood.platform.SpectrLaunchTarget
+import app.spectr.mood.ui.components.SpectrBrandMark
 import app.spectr.mood.ui.diary.DiaryRoute
 import app.spectr.mood.ui.diary.DiaryScreen
 import app.spectr.mood.ui.diary.sampleDiaryPreviewState
@@ -40,6 +57,7 @@ import app.spectr.mood.ui.more.MoreRoute
 import app.spectr.mood.ui.more.MoreScreen
 import app.spectr.mood.ui.more.sampleMorePreviewState
 import app.spectr.mood.ui.navigation.SpectrDestination
+import app.spectr.mood.ui.onboarding.OnboardingScreen
 import app.spectr.mood.ui.overview.OverviewRoute
 import app.spectr.mood.ui.overview.OverviewScreen
 import app.spectr.mood.ui.overview.sampleOverviewPreviewState
@@ -48,10 +66,13 @@ import app.spectr.mood.ui.scales.ScalesScreen
 import app.spectr.mood.ui.scales.sampleScalesPreviewState
 import app.spectr.mood.ui.theme.SpectrTheme
 import java.time.LocalDate
+import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.flow.Flow
 
 private enum class MoreOverlay {
     DOCTOR_MODE,
-    GUIDE
+    GUIDE,
+    ONBOARDING
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,14 +101,15 @@ fun SpectrApp(
     scalesContent: @Composable (SnackbarHostState) -> Unit = { hostState ->
         ScalesRoute(snackbarHostState = hostState)
     },
-    moreContent: @Composable (SnackbarHostState, () -> Unit, () -> Unit) -> Unit =
-        { hostState, onOpenDoctorMode, onOpenGuide ->
+    moreContent: @Composable (SnackbarHostState, () -> Unit, () -> Unit, () -> Unit) -> Unit =
+        { hostState, onOpenDoctorMode, onOpenGuide, onOpenOnboardingTour ->
             MoreRoute(
                 themeConfig = themeConfig,
                 onThemeModeChange = onThemeModeChange,
                 onThemePaletteChange = onThemePaletteChange,
                 onOpenDoctorMode = onOpenDoctorMode,
                 onOpenGuide = onOpenGuide,
+                onOpenOnboardingTour = onOpenOnboardingTour,
                 onLockAppNow = onLockAppNow,
                 snackbarHostState = hostState
             )
@@ -97,10 +119,34 @@ fun SpectrApp(
     var activeOverlay by rememberSaveable { mutableStateOf<MoreOverlay?>(null) }
     var requestedDiaryDateIso by rememberSaveable { mutableStateOf<String?>(null) }
     var openMomentRequestId by rememberSaveable { mutableLongStateOf(0L) }
+    var overlayBackProgress by remember { mutableFloatStateOf(0f) }
+    var tabBackProgress by remember { mutableFloatStateOf(0f) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    BackHandler(enabled = activeOverlay != null) {
-        activeOverlay = null
+    PredictiveBackHandler(enabled = activeOverlay != null) { progress: Flow<BackEventCompat> ->
+        try {
+            progress.collect { backEvent ->
+                overlayBackProgress = backEvent.progress
+            }
+            overlayBackProgress = 0f
+            activeOverlay = null
+        } catch (_: CancellationException) {
+            overlayBackProgress = 0f
+        }
+    }
+
+    PredictiveBackHandler(
+        enabled = activeOverlay == null && currentTab != SpectrDestination.DIARY
+    ) { progress: Flow<BackEventCompat> ->
+        try {
+            progress.collect { backEvent ->
+                tabBackProgress = backEvent.progress
+            }
+            tabBackProgress = 0f
+            currentTab = SpectrDestination.DIARY
+        } catch (_: CancellationException) {
+            tabBackProgress = 0f
+        }
     }
 
     LaunchedEffect(launchRequest) {
@@ -123,90 +169,157 @@ fun SpectrApp(
         }
     }
 
-    if (activeOverlay != null) {
-        SpectrMoreOverlayHost(
-            overlay = activeOverlay,
-            onClose = { activeOverlay = null },
-            modifier = modifier
-        )
-        return
+    val openDiaryDate: (LocalDate) -> Unit = remember {
+        { date ->
+            requestedDiaryDateIso = date.toString()
+            currentTab = SpectrDestination.DIARY
+        }
     }
 
-    val openDiaryDate: (LocalDate) -> Unit = { date ->
-        requestedDiaryDateIso = date.toString()
-        currentTab = SpectrDestination.DIARY
-    }
-
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = if (currentTab == SpectrDestination.DIARY) {
-                            stringResource(R.string.app_name)
-                        } else {
-                            stringResource(currentTab.labelRes)
-                        },
-                        style = MaterialTheme.typography.titleLarge
+    Box(modifier = modifier.fillMaxSize()) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+            topBar = { SpectrTopAppBar(currentTab = currentTab) },
+            bottomBar = {
+                SpectrBottomNavigationBar(
+                    currentTab = currentTab,
+                    onSelectTab = { currentTab = it }
+                )
+            }
+        ) { innerPadding ->
+            Crossfade(
+                targetState = currentTab,
+                animationSpec = tween(durationMillis = 200),
+                label = "spectr_tab_crossfade",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .graphicsLayer {
+                        val scale = 1f - (tabBackProgress * 0.05f)
+                        scaleX = scale
+                        scaleY = scale
+                        alpha = 1f - (tabBackProgress * 0.18f)
+                    }
+            ) { tab ->
+                when (tab) {
+                    SpectrDestination.DIARY -> diaryContent(
+                        snackbarHostState,
+                        requestedDiaryDateIso?.let(LocalDate::parse),
+                        { requestedDiaryDateIso = null },
+                        openMomentRequestId,
+                        { openMomentRequestId = 0L }
                     )
-                }
-            )
-        },
-        bottomBar = {
-            NavigationBar {
-                SpectrDestination.entries.forEach { destination ->
-                    val selected = destination == currentTab
-                    val label = stringResource(destination.labelRes)
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = { currentTab = destination },
-                        icon = {
-                            Icon(
-                                imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
-                                contentDescription = label
-                            )
-                        },
-                        label = { Text(text = label) }
+                    SpectrDestination.OVERVIEW -> overviewContent(openDiaryDate)
+                    SpectrDestination.SCALES -> scalesContent(snackbarHostState)
+                    SpectrDestination.MORE -> moreContent(
+                        snackbarHostState,
+                        { activeOverlay = MoreOverlay.DOCTOR_MODE },
+                        { activeOverlay = MoreOverlay.GUIDE },
+                        { activeOverlay = MoreOverlay.ONBOARDING }
                     )
                 }
             }
         }
-    ) { innerPadding ->
-        Crossfade(
-            targetState = currentTab,
-            label = "spectr_tab_crossfade",
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) { tab ->
-            when (tab) {
-                SpectrDestination.DIARY -> diaryContent(
-                    snackbarHostState,
-                    requestedDiaryDateIso?.let(LocalDate::parse),
-                    { requestedDiaryDateIso = null },
-                    openMomentRequestId,
-                    { openMomentRequestId = 0L }
-                )
-                SpectrDestination.OVERVIEW -> overviewContent(openDiaryDate)
-                SpectrDestination.SCALES -> scalesContent(snackbarHostState)
-                SpectrDestination.MORE -> moreContent(
-                    snackbarHostState,
-                    { activeOverlay = MoreOverlay.DOCTOR_MODE },
-                    { activeOverlay = MoreOverlay.GUIDE }
+
+        AnimatedContent(
+            targetState = activeOverlay,
+            transitionSpec = {
+                (slideInHorizontally(tween(240)) { it / 5 } + fadeIn(tween(220))) togetherWith
+                    (slideOutHorizontally(tween(200)) { it / 5 } + fadeOut(tween(180)))
+            },
+            label = "spectr_overlay_host"
+        ) { overlay ->
+            if (overlay != null) {
+                SpectrMoreOverlayHost(
+                    overlay = overlay,
+                    onClose = { activeOverlay = null },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            val scale = 1f - (overlayBackProgress * 0.07f)
+                            scaleX = scale
+                            scaleY = scale
+                            alpha = 1f - (overlayBackProgress * 0.2f)
+                            translationX = overlayBackProgress * 28.dp.toPx()
+                        }
                 )
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SpectrMoreOverlayHost(overlay: MoreOverlay?, onClose: () -> Unit, modifier: Modifier = Modifier) {
+private fun SpectrTopAppBar(currentTab: SpectrDestination) {
+    CenterAlignedTopAppBar(
+        title = {
+            AnimatedContent(
+                targetState = currentTab,
+                transitionSpec = {
+                    fadeIn(tween(180)) togetherWith fadeOut(tween(140))
+                },
+                label = "spectr_topbar_title"
+            ) { tab ->
+                if (tab == SpectrDestination.DIARY) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SpectrBrandMark()
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                } else {
+                    Text(
+                        text = stringResource(tab.labelRes),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    )
+}
+
+@Composable
+private fun SpectrBottomNavigationBar(currentTab: SpectrDestination, onSelectTab: (SpectrDestination) -> Unit) {
+    NavigationBar {
+        SpectrDestination.entries.forEach { destination ->
+            val selected = destination == currentTab
+            val label = stringResource(destination.labelRes)
+            NavigationBarItem(
+                selected = selected,
+                onClick = { onSelectTab(destination) },
+                icon = {
+                    Icon(
+                        imageVector = if (selected) {
+                            destination.selectedIcon
+                        } else {
+                            destination.unselectedIcon
+                        },
+                        contentDescription = label
+                    )
+                },
+                label = { Text(text = label) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SpectrMoreOverlayHost(overlay: MoreOverlay, onClose: () -> Unit, modifier: Modifier = Modifier) {
     when (overlay) {
         MoreOverlay.DOCTOR_MODE -> DoctorViewRoute(onClose = onClose, modifier = modifier)
         MoreOverlay.GUIDE -> GuideScreen(onClose = onClose, modifier = modifier)
-        null -> Unit
+        MoreOverlay.ONBOARDING -> OnboardingScreen(
+            isFirstLaunch = false,
+            onFinish = onClose,
+            modifier = modifier
+        )
     }
 }
 
@@ -224,7 +337,7 @@ private fun SpectrAppLightPreview() {
                 OverviewScreen(state = sampleOverviewPreviewState(), onIntent = {}, onOpenDiaryDate = {})
             },
             scalesContent = { ScalesScreen(state = sampleScalesPreviewState(), onIntent = {}) },
-            moreContent = { _, _, _ ->
+            moreContent = { _, _, _, _ ->
                 MoreScreen(
                     state = sampleMorePreviewState(),
                     themeConfig = config,
@@ -260,7 +373,7 @@ private fun SpectrAppAmoledPreview() {
                 OverviewScreen(state = sampleOverviewPreviewState(), onIntent = {}, onOpenDiaryDate = {})
             },
             scalesContent = { ScalesScreen(state = sampleScalesPreviewState(), onIntent = {}) },
-            moreContent = { _, _, _ ->
+            moreContent = { _, _, _, _ ->
                 MoreScreen(
                     state = sampleMorePreviewState(),
                     themeConfig = config,

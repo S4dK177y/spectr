@@ -61,11 +61,11 @@ fun ScalesScreen(state: ScalesUiState, onIntent: (ScalesIntent) -> Unit, modifie
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item(key = "scales_disclaimer") {
+        item(key = "scales_disclaimer", contentType = "disclaimer") {
             ScalesDisclaimerCard()
         }
 
-        item(key = "scales_auto_header") {
+        item(key = "scales_auto_header", contentType = "section_header") {
             Text(
                 text = stringResource(R.string.scales_auto_section_title),
                 style = MaterialTheme.typography.titleMedium,
@@ -75,7 +75,8 @@ fun ScalesScreen(state: ScalesUiState, onIntent: (ScalesIntent) -> Unit, modifie
 
         items(
             items = ScaleType.entries,
-            key = { "auto_scale_${it.name}" }
+            key = { "auto_scale_${it.name}" },
+            contentType = { "auto_scale_card" }
         ) { scaleType ->
             AutoScaleCard(
                 scaleType = scaleType,
@@ -88,7 +89,7 @@ fun ScalesScreen(state: ScalesUiState, onIntent: (ScalesIntent) -> Unit, modifie
             )
         }
 
-        item(key = "scales_history_header") {
+        item(key = "scales_history_header", contentType = "history_header") {
             ScalesHistoryHeader(
                 selectedFilter = state.historyFilter,
                 onSelectFilter = { onIntent(ScalesIntent.SelectHistoryFilter(it)) }
@@ -96,7 +97,7 @@ fun ScalesScreen(state: ScalesUiState, onIntent: (ScalesIntent) -> Unit, modifie
         }
 
         if (state.allAssessments.isNotEmpty()) {
-            item(key = "scales_trend_chart") {
+            item(key = "scales_trend_chart", contentType = "trend_chart") {
                 ScaleTrendChartCard(
                     scaleType = state.trendScaleType,
                     showScaleSwitcher = state.historyFilter == ScalesHistoryFilter.ALL,
@@ -110,13 +111,14 @@ fun ScalesScreen(state: ScalesUiState, onIntent: (ScalesIntent) -> Unit, modifie
         }
 
         if (state.filteredHistory.isEmpty()) {
-            item(key = "scales_history_empty") {
+            item(key = "scales_history_empty", contentType = "history_empty") {
                 ScaleHistoryEmptyCard()
             }
         } else {
             items(
                 items = state.filteredHistory,
-                key = { it.assessment.id }
+                key = { it.assessment.id },
+                contentType = { "history_row" }
             ) { row ->
                 ScaleHistoryRowCard(
                     row = row,

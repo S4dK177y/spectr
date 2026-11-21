@@ -1,5 +1,6 @@
 package app.spectr.mood.ui.doctor
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,6 +30,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -79,7 +81,8 @@ fun DoctorViewScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val projection = state.toOverviewProjection()
+    val projection = remember(state) { state.toOverviewProjection() }
+    val reversedRows = remember(state.dailyRows) { state.dailyRows.asReversed() }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -106,21 +109,21 @@ fun DoctorViewScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            item(key = "doctor_privacy_banner") {
+            item(key = "doctor_privacy_banner", contentType = "privacy_banner") {
                 DoctorPrivacyBanner()
             }
 
-            item(key = "doctor_period_selector") {
+            item(key = "doctor_period_selector", contentType = "period_selector") {
                 PeriodSelectorCard(
                     state = projection,
                     onSelectPeriod = { onIntent(DoctorViewIntent.SelectPeriod(it)) }
                 )
             }
 
-            item(key = "doctor_scales") {
+            item(key = "doctor_scales", contentType = "scales") {
                 DoctorScalesSummaryCard(
                     scales = state.scalesOverview,
                     referenceYear = state.today.year
@@ -128,19 +131,19 @@ fun DoctorViewScreen(
             }
 
             if (projection.chartData.isEmpty) {
-                item(key = "doctor_empty") {
+                item(key = "doctor_empty", contentType = "empty") {
                     EmptyChartsCard()
                 }
             } else {
-                item(key = "doctor_kpi") {
+                item(key = "doctor_kpi", contentType = "kpi") {
                     OverviewKpiSection(summary = projection.summary)
                 }
 
-                item(key = "doctor_markers") {
+                item(key = "doctor_markers", contentType = "markers") {
                     OverviewKeyMarkersCard(markers = projection.summary.markers)
                 }
 
-                item(key = "doctor_calendar") {
+                item(key = "doctor_calendar", contentType = "calendar") {
                     OverviewCalendarCard(
                         state = projection,
                         onIntent = { overviewIntent ->
@@ -160,7 +163,7 @@ fun DoctorViewScreen(
                     )
                 }
 
-                item(key = "doctor_chart_mood") {
+                item(key = "doctor_chart_mood", contentType = "chart_mood") {
                     MoodTrendChartCard(
                         chartData = projection.chartData,
                         referenceYear = state.today.year,
@@ -170,7 +173,7 @@ fun DoctorViewScreen(
                     )
                 }
 
-                item(key = "doctor_chart_energy_sleep") {
+                item(key = "doctor_chart_energy_sleep", contentType = "chart_energy_sleep") {
                     EnergySleepChartCard(
                         chartData = projection.chartData,
                         referenceYear = state.today.year,
@@ -180,7 +183,10 @@ fun DoctorViewScreen(
                     )
                 }
 
-                item(key = "doctor_chart_anxiety_irritability") {
+                item(
+                    key = "doctor_chart_anxiety_irritability",
+                    contentType = "chart_anxiety_irritability"
+                ) {
                     AnxietyIrritabilityChartCard(
                         chartData = projection.chartData,
                         referenceYear = state.today.year,
@@ -190,9 +196,9 @@ fun DoctorViewScreen(
                     )
                 }
 
-                item(key = "doctor_daily_log") {
+                item(key = "doctor_daily_log", contentType = "daily_log") {
                     DoctorSanitizedDailyLogCard(
-                        rows = state.dailyRows.asReversed(),
+                        rows = reversedRows,
                         referenceYear = state.today.year,
                         expanded = state.isDailyLogExpanded,
                         onToggleExpanded = { onIntent(DoctorViewIntent.ToggleDailyLogExpanded) }
@@ -367,72 +373,77 @@ private fun DoctorSanitizedDailyLogCard(
                 }
             }
 
-            if (expanded) {
-                Spacer(modifier = Modifier.height(6.dp))
-                rows.forEachIndexed { index, row ->
-                    if (index > 0) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 8.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.Top,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = moodColors.containerColor(row.mood)
-                        ) {
-                            Text(
-                                text = formatSignedMood(row.mood),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = moodColors.contentColor(row.mood),
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            AnimatedVisibility(visible = expanded) {
+                Column {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    rows.forEachIndexed { index, row ->
+                        if (index > 0) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
                             )
                         }
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Text(
-                                text = "${formatShortChartDate(row.date, referenceYear)} · " +
-                                    dailyDynamicsLabel(row.dailyDynamics),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                            val metricsLine = if (row.sleepMinutes != null) {
-                                stringResource(
-                                    R.string.doctor_mode_daily_log_metrics,
-                                    formatSleepDuration(row.sleepMinutes),
-                                    row.energy,
-                                    row.anxiety,
-                                    row.irritability
-                                )
-                            } else {
-                                stringResource(
-                                    R.string.doctor_mode_daily_log_no_sleep,
-                                    row.energy,
-                                    row.anxiety,
-                                    row.irritability
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = moodColors.containerColor(row.mood)
+                            ) {
+                                Text(
+                                    text = formatSignedMood(row.mood),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = moodColors.contentColor(row.mood),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
-                            Text(
-                                text = metricsLine,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            val tags = PdfTextFormatters.formatSymptomTags(row.symptoms, row.isMixedDay)
-                            val details = PdfTextFormatters.formatDetailsSuffix(row.alcoholStatus, row.medicationStatus)
-                            val combined = listOf(tags, details).filter { it.isNotEmpty() }.joinToString(" · ")
-                            if (combined.isNotEmpty()) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
                                 Text(
-                                    text = combined,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary
+                                    text = "${formatShortChartDate(row.date, referenceYear)} · " +
+                                        dailyDynamicsLabel(row.dailyDynamics),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
                                 )
+                                val metricsLine = if (row.sleepMinutes != null) {
+                                    stringResource(
+                                        R.string.doctor_mode_daily_log_metrics,
+                                        formatSleepDuration(row.sleepMinutes),
+                                        row.energy,
+                                        row.anxiety,
+                                        row.irritability
+                                    )
+                                } else {
+                                    stringResource(
+                                        R.string.doctor_mode_daily_log_no_sleep,
+                                        row.energy,
+                                        row.anxiety,
+                                        row.irritability
+                                    )
+                                }
+                                Text(
+                                    text = metricsLine,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                val tags = PdfTextFormatters.formatSymptomTags(row.symptoms, row.isMixedDay)
+                                val details = PdfTextFormatters.formatDetailsSuffix(
+                                    row.alcoholStatus,
+                                    row.medicationStatus
+                                )
+                                val combined = listOf(tags, details).filter { it.isNotEmpty() }.joinToString(" · ")
+                                if (combined.isNotEmpty()) {
+                                    Text(
+                                        text = combined,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
                             }
                         }
                     }

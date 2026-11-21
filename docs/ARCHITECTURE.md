@@ -11,7 +11,7 @@
 - `data/remote/` — `supabase-kt` 3.x (`auth-kt`, `postgrest-kt`) + WorkManager `SyncWorker` (delta-sync по `updated_at`, разрешение конфликтов Last-Write-Wins по UTC timestamp).
 - `security/` — `PinHashManager` (PBKDF2-HMAC-SHA256 для локального PIN), `BiometricLockManager` (платформенный `BiometricPrompt`), а также `CryptoEngine`, `KeystoreManager`, `RecoveryKeyCodec` (Этап 7).
 - `platform/` — `AlarmManager` exact-alarm напоминания с восстановлением после перезагрузки и умной отменой (`ReminderCoordinator`, `SpectrAlarmScheduler`, `SpectrNotificationPublisher`, `ReminderBootReceiver`), нативный векторный `PdfDocument` генератор (`DoctorPdfReportGenerator`, `PdfExportStorage` + `FileProvider`), виджет `Jetpack Glance 1.1.1` (`MoodGlanceWidget`, `MoodWidgetUpdater`), deep-link контракт `SpectrLaunchContract`.
-- `ui/` — Jetpack Compose + Material 3, однонаправленный поток состояния (`StateFlow<UiState>`), собственные векторные Canvas-графики, read-only «Режим показа врачу» (`ui/doctor/`), встроенный «Справочник» (`ui/guide/`), экспорт PDF (`ui/pdf/`) и экран блокировки (`ui/security/`).
+- `ui/` — Jetpack Compose + Material 3, однонаправленный поток состояния (`StateFlow<UiState>` с `@Immutable` и `config/compose_stability.conf` для 120 Гц), собственные векторные Canvas-графики и векторные иллюстрации (`ui/components/SpectrVectorIllustrations.kt`, строго без эмодзи), приветственный экран онбординга (`ui/onboarding/OnboardingScreen.kt`), предиктивный жест «Назад» (`PredictiveBackHandler`), read-only «Режим показа врачу» (`ui/doctor/`), встроенный «Справочник» (`ui/guide/`), экспорт PDF (`ui/pdf/`) и экран блокировки (`ui/security/`).
 
 ---
 

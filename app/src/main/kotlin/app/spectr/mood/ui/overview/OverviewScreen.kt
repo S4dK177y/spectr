@@ -54,7 +54,7 @@ fun OverviewScreen(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item(key = "overview_calendar") {
+        item(key = "overview_calendar", contentType = "calendar") {
             OverviewCalendarCard(
                 state = state,
                 onIntent = onIntent,
@@ -62,7 +62,7 @@ fun OverviewScreen(
             )
         }
 
-        item(key = "overview_period_selector") {
+        item(key = "overview_period_selector", contentType = "period_selector") {
             PeriodSelectorCard(
                 state = state,
                 onSelectPeriod = { onIntent(OverviewIntent.SelectPeriod(it)) }
@@ -70,11 +70,11 @@ fun OverviewScreen(
         }
 
         if (state.chartData.isEmpty) {
-            item(key = "overview_charts_empty") {
+            item(key = "overview_charts_empty", contentType = "charts_empty") {
                 EmptyChartsCard()
             }
         } else {
-            item(key = "overview_chart_mood") {
+            item(key = "overview_chart_mood", contentType = "chart_mood") {
                 MoodTrendChartCard(
                     chartData = state.chartData,
                     referenceYear = state.today.year,
@@ -86,7 +86,7 @@ fun OverviewScreen(
                 )
             }
 
-            item(key = "overview_chart_energy_sleep") {
+            item(key = "overview_chart_energy_sleep", contentType = "chart_energy_sleep") {
                 EnergySleepChartCard(
                     chartData = state.chartData,
                     referenceYear = state.today.year,
@@ -98,7 +98,10 @@ fun OverviewScreen(
                 )
             }
 
-            item(key = "overview_chart_anxiety_irritability") {
+            item(
+                key = "overview_chart_anxiety_irritability",
+                contentType = "chart_anxiety_irritability"
+            ) {
                 AnxietyIrritabilityChartCard(
                     chartData = state.chartData,
                     referenceYear = state.today.year,
@@ -111,11 +114,11 @@ fun OverviewScreen(
             }
         }
 
-        item(key = "overview_kpi_summary") {
+        item(key = "overview_kpi_summary", contentType = "kpi_summary") {
             OverviewKpiSection(summary = state.summary)
         }
 
-        item(key = "overview_key_markers") {
+        item(key = "overview_key_markers", contentType = "key_markers") {
             OverviewKeyMarkersCard(markers = state.summary.markers)
         }
     }

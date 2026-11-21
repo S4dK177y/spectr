@@ -1,5 +1,8 @@
 package app.spectr.mood.ui.diary
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -46,11 +49,24 @@ import androidx.compose.ui.unit.dp
 import app.spectr.mood.R
 import app.spectr.mood.domain.model.MomentCheckIn
 import app.spectr.mood.ui.theme.LocalMoodColors
+import java.time.LocalDate
 
 @Composable
-internal fun DateSwitcherCard(state: DiaryUiState, onIntent: (DiaryIntent) -> Unit, modifier: Modifier = Modifier) {
+internal fun DateSwitcherCard(
+    selectedDate: LocalDate,
+    today: LocalDate,
+    isToday: Boolean,
+    isYesterday: Boolean,
+    canGoNextDay: Boolean,
+    hasSavedEntry: Boolean,
+    hasUnsavedChanges: Boolean,
+    onIntent: (DiaryIntent) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = tween(220)),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
@@ -74,12 +90,12 @@ internal fun DateSwitcherCard(state: DiaryUiState, onIntent: (DiaryIntent) -> Un
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     FilterChip(
-                        selected = state.isYesterday,
+                        selected = isYesterday,
                         onClick = { onIntent(DiaryIntent.SelectYesterday) },
                         label = { Text(text = stringResource(R.string.diary_yesterday)) }
                     )
                     FilterChip(
-                        selected = state.isToday,
+                        selected = isToday,
                         onClick = { onIntent(DiaryIntent.SelectToday) },
                         label = { Text(text = stringResource(R.string.diary_today)) }
                     )
@@ -87,7 +103,7 @@ internal fun DateSwitcherCard(state: DiaryUiState, onIntent: (DiaryIntent) -> Un
 
                 IconButton(
                     onClick = { onIntent(DiaryIntent.NextDay) },
-                    enabled = state.canGoNextDay
+                    enabled = canGoNextDay
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
@@ -124,7 +140,7 @@ internal fun DateSwitcherCard(state: DiaryUiState, onIntent: (DiaryIntent) -> Un
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = formatDiaryDate(state.selectedDate, state.today),
+                            text = formatDiaryDate(selectedDate, today),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -132,8 +148,8 @@ internal fun DateSwitcherCard(state: DiaryUiState, onIntent: (DiaryIntent) -> Un
                 }
 
                 EntryStatusBadge(
-                    hasSavedEntry = state.hasSavedEntry,
-                    hasUnsavedChanges = state.hasUnsavedChanges
+                    hasSavedEntry = hasSavedEntry,
+                    hasUnsavedChanges = hasUnsavedChanges
                 )
             }
         }
@@ -142,16 +158,26 @@ internal fun DateSwitcherCard(state: DiaryUiState, onIntent: (DiaryIntent) -> Un
 
 @Composable
 private fun EntryStatusBadge(hasSavedEntry: Boolean, hasUnsavedChanges: Boolean) {
-    val containerColor = when {
+    val targetContainerColor = when {
         hasUnsavedChanges -> MaterialTheme.colorScheme.tertiaryContainer
         hasSavedEntry -> MaterialTheme.colorScheme.secondaryContainer
         else -> MaterialTheme.colorScheme.surfaceContainerHighest
     }
-    val contentColor = when {
+    val targetContentColor = when {
         hasUnsavedChanges -> MaterialTheme.colorScheme.onTertiaryContainer
         hasSavedEntry -> MaterialTheme.colorScheme.onSecondaryContainer
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
+    val containerColor = animateColorAsState(
+        targetValue = targetContainerColor,
+        animationSpec = tween(200),
+        label = "status_badge_bg"
+    ).value
+    val contentColor = animateColorAsState(
+        targetValue = targetContentColor,
+        animationSpec = tween(200),
+        label = "status_badge_fg"
+    ).value
     val label = when {
         hasUnsavedChanges -> stringResource(R.string.diary_status_unsaved)
         hasSavedEntry -> stringResource(R.string.diary_status_saved)
@@ -201,7 +227,9 @@ internal fun MomentsSectionCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = tween(220)),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),

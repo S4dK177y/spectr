@@ -1,5 +1,9 @@
 package app.spectr.mood.ui.security
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -196,28 +201,56 @@ private fun AppLockHeaderSection(enteredLength: Int, errorMessage: String?, cool
 
 @Composable
 internal fun PinDotsRow(enteredLength: Int, totalLength: Int, isError: Boolean, modifier: Modifier = Modifier) {
+    val shakeOffset = remember { Animatable(0f) }
+
+    LaunchedEffect(isError) {
+        if (isError) {
+            for (delta in floatArrayOf(-12f, 12f, -8f, 8f, -4f, 0f)) {
+                shakeOffset.animateTo(delta, animationSpec = tween(durationMillis = 42))
+            }
+        } else {
+            shakeOffset.snapTo(0f)
+        }
+    }
+
     Row(
-        modifier = modifier,
+        modifier = modifier.graphicsLayer { translationX = shakeOffset.value.dp.toPx() },
         horizontalArrangement = Arrangement.spacedBy(18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         repeat(totalLength) { idx ->
             val filled = idx < enteredLength
-            val fillColor = when {
+            val targetFill = when {
                 isError -> MaterialTheme.colorScheme.error
                 filled -> MaterialTheme.colorScheme.primary
-                else -> MaterialTheme.colorScheme.surfaceContainerHighest
+                else -> MaterialTheme.colorScheme.background
             }
-            val borderColor = when {
+            val targetBorder = when {
                 isError -> MaterialTheme.colorScheme.error
                 filled -> MaterialTheme.colorScheme.primary
                 else -> MaterialTheme.colorScheme.outline
             }
+            val fillColor by animateColorAsState(
+                targetValue = targetFill,
+                animationSpec = tween(150),
+                label = "pin_dot_fill"
+            )
+            val borderColor by animateColorAsState(
+                targetValue = targetBorder,
+                animationSpec = tween(150),
+                label = "pin_dot_border"
+            )
+            val dotWidth by animateDpAsState(
+                targetValue = if (filled) 20.dp else 16.dp,
+                animationSpec = tween(150),
+                label = "pin_dot_width"
+            )
             Box(
                 modifier = Modifier
-                    .size(16.dp)
+                    .height(16.dp)
+                    .size(width = dotWidth, height = 16.dp)
                     .clip(CircleShape)
-                    .background(if (filled) fillColor else MaterialTheme.colorScheme.background)
+                    .background(fillColor)
                     .border(width = 2.dp, color = borderColor, shape = CircleShape)
             )
         }

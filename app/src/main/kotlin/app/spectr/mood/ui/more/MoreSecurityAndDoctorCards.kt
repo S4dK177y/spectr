@@ -2,6 +2,7 @@ package app.spectr.mood.ui.more
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.MedicalInformation
 import androidx.compose.material.icons.outlined.PictureAsPdf
@@ -63,6 +65,7 @@ internal fun DoctorToolsAndGuideCard(
     onOpenPdfExport: () -> Unit,
     onOpenDoctorMode: () -> Unit,
     onOpenGuide: () -> Unit,
+    onOpenOnboardingTour: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -72,7 +75,7 @@ internal fun DoctorToolsAndGuideCard(
         ),
         shape = RoundedCornerShape(20.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(18.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -118,6 +121,18 @@ internal fun DoctorToolsAndGuideCard(
                 title = stringResource(R.string.more_guide_title),
                 subtitle = stringResource(R.string.more_guide_subtitle),
                 onClick = onOpenGuide
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
+
+            MoreActionRow(
+                icon = Icons.Outlined.Explore,
+                title = stringResource(R.string.more_onboarding_tour_title),
+                subtitle = stringResource(R.string.more_onboarding_tour_subtitle),
+                onClick = onOpenOnboardingTour
             )
         }
     }
@@ -202,103 +217,108 @@ internal fun LocalSecurityCard(
                 onCheckedChange = { onIntent(MoreIntent.ToggleAppLock(it)) }
             )
 
-            if (config.isLockActive) {
-                Spacer(modifier = Modifier.height(12.dp))
+            AnimatedVisibility(visible = config.isLockActive) {
+                Column {
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Min),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = { onIntent(MoreIntent.OpenChangePinDialog) },
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Pin,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = stringResource(R.string.security_change_pin_button),
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        OutlinedButton(
+                            onClick = { onIntent(MoreIntent.OpenChangePinDialog) },
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Pin,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(R.string.security_change_pin_button),
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        FilledTonalButton(
+                            onClick = onLockNowClick,
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Lock,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(R.string.security_lock_now_button),
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
 
-                    FilledTonalButton(
-                        onClick = onLockNowClick,
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Lock,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = stringResource(R.string.security_lock_now_button),
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    val bioAvailable = biometricAvailability == BiometricAvailability.AVAILABLE
+                    val bioSubtitle = when (biometricAvailability) {
+                        BiometricAvailability.AVAILABLE ->
+                            stringResource(R.string.security_biometric_subtitle_available)
+                        BiometricAvailability.NONE_ENROLLED ->
+                            stringResource(R.string.security_biometric_subtitle_not_enrolled)
+                        BiometricAvailability.UNAVAILABLE ->
+                            stringResource(R.string.security_biometric_subtitle_unavailable)
                     }
-                }
+                    SecurityToggleRow(
+                        title = stringResource(R.string.security_biometric_title),
+                        subtitle = bioSubtitle,
+                        checked = config.isBiometricEnabled && bioAvailable,
+                        enabled = bioAvailable,
+                        onCheckedChange = { onIntent(MoreIntent.SetBiometricEnabled(it)) }
+                    )
 
-                Spacer(modifier = Modifier.height(14.dp))
-                val bioAvailable = biometricAvailability == BiometricAvailability.AVAILABLE
-                val bioSubtitle = when (biometricAvailability) {
-                    BiometricAvailability.AVAILABLE -> stringResource(R.string.security_biometric_subtitle_available)
-                    BiometricAvailability.NONE_ENROLLED ->
-                        stringResource(R.string.security_biometric_subtitle_not_enrolled)
-                    BiometricAvailability.UNAVAILABLE ->
-                        stringResource(R.string.security_biometric_subtitle_unavailable)
-                }
-                SecurityToggleRow(
-                    title = stringResource(R.string.security_biometric_title),
-                    subtitle = bioSubtitle,
-                    checked = config.isBiometricEnabled && bioAvailable,
-                    enabled = bioAvailable,
-                    onCheckedChange = { onIntent(MoreIntent.SetBiometricEnabled(it)) }
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
-                Text(
-                    text = stringResource(R.string.security_timeout_label),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    LockTimeout.entries.forEach { timeout ->
-                        FilterChip(
-                            selected = config.lockTimeout == timeout,
-                            onClick = { onIntent(MoreIntent.SetLockTimeout(timeout)) },
-                            label = { Text(text = lockTimeoutLabel(timeout)) }
-                        )
-                    }
-                }
-                if (config.lockTimeout == LockTimeout.DISABLED_ON_MINIMIZE) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                     Text(
-                        text = stringResource(R.string.security_timeout_disabled_hint),
-                        style = MaterialTheme.typography.bodySmall,
+                        text = stringResource(R.string.security_timeout_label),
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        LockTimeout.entries.forEach { timeout ->
+                            FilterChip(
+                                selected = config.lockTimeout == timeout,
+                                onClick = { onIntent(MoreIntent.SetLockTimeout(timeout)) },
+                                label = { Text(text = lockTimeoutLabel(timeout)) }
+                            )
+                        }
+                    }
+                    AnimatedVisibility(visible = config.lockTimeout == LockTimeout.DISABLED_ON_MINIMIZE) {
+                        Column {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = stringResource(R.string.security_timeout_disabled_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
 

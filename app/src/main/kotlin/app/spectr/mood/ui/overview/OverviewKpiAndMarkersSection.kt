@@ -18,6 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +34,7 @@ import app.spectr.mood.ui.diary.formatSignedMood
 import app.spectr.mood.ui.theme.LocalMoodColors
 import kotlin.math.roundToInt
 
+@Immutable
 private data class KpiTileModel(
     val label: String,
     val value: String,
@@ -43,6 +46,7 @@ private data class KpiTileModel(
 @Composable
 internal fun OverviewKpiSection(summary: DiaryAnalyticsSummary, modifier: Modifier = Modifier) {
     val tiles = buildCoreKpiTiles(summary) + buildThresholdKpiTiles(summary)
+    val rows = remember(tiles) { tiles.chunked(2) }
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -60,7 +64,7 @@ internal fun OverviewKpiSection(summary: DiaryAnalyticsSummary, modifier: Modifi
             Spacer(modifier = Modifier.height(12.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                tiles.chunked(2).forEach { rowTiles ->
+                rows.forEach { rowTiles ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

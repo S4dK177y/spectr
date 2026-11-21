@@ -41,6 +41,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,6 +66,7 @@ private val PDF_DATE_FMT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM
 /**
  * UI state slice for the PDF export bottom sheet.
  */
+@Immutable
 data class PdfExportSheetState(
     val isOpen: Boolean = false,
     val periodPreset: ReportPeriodPreset = ReportPeriodPreset.DAYS_30,

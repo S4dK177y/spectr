@@ -1,5 +1,6 @@
 package app.spectr.mood.ui.overview
 
+import androidx.compose.runtime.Immutable
 import app.spectr.mood.domain.calculator.AnalyticsPeriod
 import app.spectr.mood.domain.calculator.DiaryAnalyticsSummary
 import app.spectr.mood.domain.calendar.CalendarMonthGrid
@@ -36,6 +37,7 @@ enum class OverviewChartKind {
 /**
  * Unidirectional UI state for the Overview tab.
  */
+@Immutable
 data class OverviewUiState(
     val today: LocalDate,
     val displayedMonth: YearMonth,

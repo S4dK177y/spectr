@@ -1,5 +1,6 @@
 package app.spectr.mood.ui.scales
 
+import androidx.compose.runtime.Immutable
 import app.spectr.mood.domain.calculator.AutoScalesSnapshot
 import app.spectr.mood.domain.calculator.ClinicalScaleCalculator
 import app.spectr.mood.domain.chart.ScaleTrendPoint
@@ -36,6 +37,7 @@ enum class ScalesSnackbarMessage {
 /**
  * State for the confirmation / manual editing sheet of a PHQ-9, GAD-7, or ASRM assessment.
  */
+@Immutable
 data class ScaleEditorState(
     val editingAssessmentId: String? = null,
     val scaleType: ScaleType,
@@ -70,11 +72,13 @@ data class ScaleEditorState(
  * Single confirmed assessment entry enriched with delta from the chronologically previous
  * assessment of the same scale.
  */
+@Immutable
 data class ScaleHistoryRow(val assessment: ScaleAssessment, val deltaFromPrevious: Int?)
 
 /**
  * Unidirectional UI state for the Scales tab.
  */
+@Immutable
 data class ScalesUiState(
     val today: LocalDate,
     val autoSnapshot: AutoScalesSnapshot? = null,

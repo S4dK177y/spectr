@@ -1,5 +1,6 @@
 package app.spectr.mood.ui.more
 
+import androidx.compose.runtime.Immutable
 import app.spectr.mood.domain.model.ReminderConfig
 import app.spectr.mood.domain.model.SecurityConfig
 import app.spectr.mood.domain.reminder.DailyReminderSchedule
@@ -13,6 +14,7 @@ import java.time.LocalDate
 /**
  * Unidirectional UI state for the «Ещё» tab (Doctor tools, Security, Reminders, Widget, Theme).
  */
+@Immutable
 data class MoreUiState(
     val today: LocalDate = LocalDate.now(),
     val reminderConfig: ReminderConfig = ReminderConfig(),

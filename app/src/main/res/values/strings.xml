@@ -443,6 +443,8 @@
     <string name="more_doctor_mode_subtitle">Чистый экран «только чтение» со скрытием личных заметок и моментов</string>
     <string name="more_guide_title">Справочник</string>
     <string name="more_guide_subtitle">Шкала −5..+5 (справочно), правила заполнения и критерии 7 симптомов</string>
+    <string name="more_onboarding_tour_title">Обзор возможностей Spectr</string>
+    <string name="more_onboarding_tour_subtitle">Интерактивный гид по функциям дневника, графикам, шкалам и приватности</string>
 
     <!-- More tab: Local Security (PIN / Biometrics / FLAG_SECURE) -->
     <string name="security_section_title">Локальная защита</string>
@@ -561,4 +563,41 @@
     <string name="guide_scales_phq9_ranges">PHQ-9 (0–27, 14 дн.): 0–4 Минимальный · 5–9 Лёгкий · 10–14 Умеренный · 15–19 Умеренно-тяжёлый · 20–27 Выраженный.</string>
     <string name="guide_scales_gad7_ranges">GAD-7 (0–21, 14 дн.): 0–4 Минимальная · 5–9 Лёгкая · 10–14 Умеренная · 15–21 Выраженная.</string>
     <string name="guide_scales_asrm_ranges">ASRM (0–20, 7 дн.): 0–5 Обычный фон · 6–20 Повышенная активация.</string>
+
+    <!-- Welcome / Onboarding tour -->
+    <string name="onboarding_skip">Пропустить</string>
+    <string name="onboarding_close">Закрыть</string>
+    <string name="onboarding_back">Назад</string>
+    <string name="onboarding_next">Далее</string>
+    <string name="onboarding_start">Начать работу</string>
+    <string name="onboarding_done">Готово</string>
+    <string name="onboarding_step_badge">Шаг %1$d из %2$d</string>
+
+    <string name="onboarding_p1_tag">Дневник и моменты</string>
+    <string name="onboarding_p1_title">Спектр состояния без лишнего шума</string>
+    <string name="onboarding_p1_body">Оценивайте общий фон дня по шкале −5 .. +5, отмечайте динамику в течение суток и добавляйте быстрые 5-секундные «Отметки момента», чтобы вечером видеть полную картину.</string>
+    <string name="onboarding_p1_bullet_1">Шкала −5 .. +5 с понятными ориентирами относительно ровного фона (0)</string>
+    <string name="onboarding_p1_bullet_2">Быстрые отметки момента с точным временем в течение дня</string>
+    <string name="onboarding_p1_bullet_3">Удобный переключатель «Вчера | Сегодня» и выбор любой даты</string>
+
+    <string name="onboarding_p2_tag">Сон, энергия и симптомы</string>
+    <string name="onboarding_p2_title">Точный учёт разбитого сна и 7 маркеров</string>
+    <string name="onboarding_p2_body">Фиксируйте один или несколько отрезков сна с переходом через полночь и вычетом пробуждений, уровень энергии, тревоги, раздражительности и 7 симптомов со встроенными подсказками (?).</string>
+    <string name="onboarding_p2_bullet_1">Конструктор разбитого сна и контроль порога недосыпа (&lt; 6 ч)</string>
+    <string name="onboarding_p2_bullet_2">7 чипов симптомов с нейтральными критериями «когда ставить / не ставить»</string>
+    <string name="onboarding_p2_bullet_3">Автоматический расчёт бейджа «Смешанный день» при сочетании спада и активации</string>
+
+    <string name="onboarding_p3_tag">Аналитика и шкалы</string>
+    <string name="onboarding_p3_title">Векторные графики, 14 KPI и авто-шкалы</string>
+    <string name="onboarding_p3_body">Наблюдайте динамику на помесячном календаре и трёх интерактивных графиках, отслеживайте 14 KPI-метрик и сверяйте справочные шкалы PHQ-9, GAD-7 и ASRM.</string>
+    <string name="onboarding_p3_bullet_1">Помесячный цветной календарь и 3 интерактивных графика с касанием по точкам</string>
+    <string name="onboarding_p3_bullet_2">Справочный авторасчёт PHQ-9 (14 дн.), GAD-7 (14 дн.) и ASRM (7 дн.) по дневнику</string>
+    <string name="onboarding_p3_bullet_3">Ручная сверка и сохранение подтверждённых замеров с графиком истории</string>
+
+    <string name="onboarding_p4_tag">Врачу и приватность</string>
+    <string name="onboarding_p4_title">Отчёт для врача и защита Offline-First</string>
+    <string name="onboarding_p4_body">Формируйте векторный PDF-отчёт A4 или включайте безопасный «Режим показа врачу» со скрытием личных заметок. Все данные работают локально без аккаунта и защищены на устройстве.</string>
+    <string name="onboarding_p4_bullet_1">Векторный PDF A4 (KPI, шкалы, календарь, 3 графика) и «Режим показа врачу»</string>
+    <string name="onboarding_p4_bullet_2">Защита PIN-кодом, биометрией и запретом скриншотов (FLAG_SECURE)</string>
+    <string name="onboarding_p4_bullet_3">Надёжные вечерние напоминания и виджет 7-дневной динамики на рабочий стол</string>
 </resources>

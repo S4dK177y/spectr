@@ -47,6 +47,15 @@ import app.spectr.mood.ui.theme.LocalMoodColors
 import app.spectr.mood.ui.theme.MoodColorScale
 import app.spectr.mood.ui.theme.SpectrTheme
 
+private val GUIDE_MOOD_LEVELS = (MoodColorScale.MIN_MOOD..MoodColorScale.MAX_MOOD).toList()
+private val GUIDE_DIARY_RULES = listOf(
+    R.string.guide_rule_overall_title to R.string.guide_rule_overall_body,
+    R.string.guide_rule_death_title to R.string.guide_rule_death_body,
+    R.string.guide_rule_sleep_title to R.string.guide_rule_sleep_body,
+    R.string.guide_rule_moments_title to R.string.guide_rule_moments_body,
+    R.string.guide_rule_mixed_title to R.string.guide_rule_mixed_body
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GuideScreen(onClose: () -> Unit, modifier: Modifier = Modifier) {
@@ -75,26 +84,26 @@ fun GuideScreen(onClose: () -> Unit, modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            item(key = "guide_disclaimer") {
+            item(key = "guide_disclaimer", contentType = "disclaimer") {
                 GuideDisclaimerBanner()
             }
 
-            item(key = "guide_mood_scale") {
+            item(key = "guide_mood_scale", contentType = "mood_scale") {
                 GuideMoodScaleCard()
             }
 
-            item(key = "guide_rules") {
+            item(key = "guide_rules", contentType = "rules") {
                 GuideDiaryRulesCard()
             }
 
-            item(key = "guide_symptoms") {
+            item(key = "guide_symptoms", contentType = "symptoms") {
                 GuideSymptomsCriteriaCard()
             }
 
-            item(key = "guide_scales") {
+            item(key = "guide_scales", contentType = "scales") {
                 GuideClinicalScalesCard()
             }
         }
@@ -133,7 +142,6 @@ private fun GuideDisclaimerBanner() {
 @Composable
 private fun GuideMoodScaleCard() {
     val moodColors = LocalMoodColors.current
-    val levels = (MoodColorScale.MIN_MOOD..MoodColorScale.MAX_MOOD).toList()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -157,7 +165,7 @@ private fun GuideMoodScaleCard() {
             Spacer(modifier = Modifier.height(12.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                levels.forEach { score ->
+                GUIDE_MOOD_LEVELS.forEach { score ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.Top,
@@ -198,14 +206,6 @@ private fun GuideMoodScaleCard() {
 
 @Composable
 private fun GuideDiaryRulesCard() {
-    val rules = listOf(
-        R.string.guide_rule_overall_title to R.string.guide_rule_overall_body,
-        R.string.guide_rule_death_title to R.string.guide_rule_death_body,
-        R.string.guide_rule_sleep_title to R.string.guide_rule_sleep_body,
-        R.string.guide_rule_moments_title to R.string.guide_rule_moments_body,
-        R.string.guide_rule_mixed_title to R.string.guide_rule_mixed_body
-    )
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -223,7 +223,7 @@ private fun GuideDiaryRulesCard() {
                 fontWeight = FontWeight.SemiBold
             )
 
-            rules.forEachIndexed { idx, (titleRes, bodyRes) ->
+            GUIDE_DIARY_RULES.forEachIndexed { idx, (titleRes, bodyRes) ->
                 if (idx > 0) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }

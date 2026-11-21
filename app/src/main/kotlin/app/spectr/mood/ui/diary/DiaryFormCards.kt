@@ -1,6 +1,13 @@
 package app.spectr.mood.ui.diary
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,6 +63,8 @@ import app.spectr.mood.ui.theme.LocalMoodColors
 import kotlin.math.roundToInt
 
 private const val HIGH_RATING_THRESHOLD = 7
+private val NEGATIVE_MOOD_SCORES = listOf(-5, -4, -3, -2, -1)
+private val NON_NEGATIVE_MOOD_SCORES = listOf(0, 1, 2, 3, 4, 5)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -124,10 +133,20 @@ internal fun MoodCard(form: DailyEntryFormState, onIntent: (DiaryIntent) -> Unit
 @Composable
 internal fun MoodScaleSelector(selectedMood: Int, onSelectMood: (Int) -> Unit, modifier: Modifier = Modifier) {
     val moodColors = LocalMoodColors.current
+    val bannerBg = animateColorAsState(
+        targetValue = moodColors.containerColor(selectedMood),
+        animationSpec = tween(220),
+        label = "mood_banner_bg"
+    ).value
+    val bannerFg = animateColorAsState(
+        targetValue = moodColors.contentColor(selectedMood),
+        animationSpec = tween(220),
+        label = "mood_banner_fg"
+    ).value
 
     Column(modifier = modifier.fillMaxWidth()) {
         Surface(
-            color = moodColors.containerColor(selectedMood),
+            color = bannerBg,
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -136,16 +155,24 @@ internal fun MoodScaleSelector(selectedMood: Int, onSelectMood: (Int) -> Unit, m
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = formatSignedMood(selectedMood),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = moodColors.contentColor(selectedMood)
-                )
+                AnimatedContent(
+                    targetState = selectedMood,
+                    transitionSpec = {
+                        fadeIn(tween(160)) togetherWith fadeOut(tween(120))
+                    },
+                    label = "mood_score_number"
+                ) { score ->
+                    Text(
+                        text = formatSignedMood(score),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = bannerFg
+                    )
+                }
                 Text(
                     text = moodDescription(selectedMood),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = moodColors.contentColor(selectedMood)
+                    color = bannerFg
                 )
             }
         }
@@ -153,13 +180,13 @@ internal fun MoodScaleSelector(selectedMood: Int, onSelectMood: (Int) -> Unit, m
         Spacer(modifier = Modifier.height(12.dp))
 
         MoodScoreRow(
-            scores = listOf(-5, -4, -3, -2, -1),
+            scores = NEGATIVE_MOOD_SCORES,
             selectedMood = selectedMood,
             onSelectMood = onSelectMood
         )
         Spacer(modifier = Modifier.height(8.dp))
         MoodScoreRow(
-            scores = listOf(0, 1, 2, 3, 4, 5),
+            scores = NON_NEGATIVE_MOOD_SCORES,
             selectedMood = selectedMood,
             onSelectMood = onSelectMood
         )
@@ -254,18 +281,26 @@ internal fun SleepAndEnergyCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            when (form.sleepInputMode) {
-                SleepInputMode.INTERVALS -> SleepIntervalsSection(
-                    intervals = form.sleepIntervals,
-                    onAdd = { onIntent(DiaryIntent.OpenNewSleepInterval) },
-                    onEdit = { onIntent(DiaryIntent.OpenEditSleepInterval(it)) },
-                    onRemove = { onIntent(DiaryIntent.RemoveSleepInterval(it)) }
-                )
+            AnimatedContent(
+                targetState = form.sleepInputMode,
+                transitionSpec = {
+                    fadeIn(tween(180)) togetherWith fadeOut(tween(140))
+                },
+                label = "sleep_input_mode_switch"
+            ) { mode ->
+                when (mode) {
+                    SleepInputMode.INTERVALS -> SleepIntervalsSection(
+                        intervals = form.sleepIntervals,
+                        onAdd = { onIntent(DiaryIntent.OpenNewSleepInterval) },
+                        onEdit = { onIntent(DiaryIntent.OpenEditSleepInterval(it)) },
+                        onRemove = { onIntent(DiaryIntent.RemoveSleepInterval(it)) }
+                    )
 
-                SleepInputMode.MANUAL_HOURS -> ManualSleepSection(
-                    form = form,
-                    onTextChange = { onIntent(DiaryIntent.UpdateManualSleepText(it)) }
-                )
+                    SleepInputMode.MANUAL_HOURS -> ManualSleepSection(
+                        form = form,
+                        onTextChange = { onIntent(DiaryIntent.UpdateManualSleepText(it)) }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -338,7 +373,10 @@ private fun SleepIntervalsSection(
     onEdit: (String) -> Unit,
     onRemove: (String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        modifier = Modifier.animateContentSize(animationSpec = tween(200)),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         if (intervals.isEmpty()) {
             Text(
                 text = stringResource(R.string.diary_sleep_empty_intervals),
@@ -694,16 +732,24 @@ internal fun RatingSliderBlock(
     modifier: Modifier = Modifier
 ) {
     val isHigh = highlightHigh && value >= HIGH_RATING_THRESHOLD
-    val badgeBg = if (isHigh) {
-        MaterialTheme.colorScheme.errorContainer
-    } else {
-        MaterialTheme.colorScheme.secondaryContainer
-    }
-    val badgeFg = if (isHigh) {
-        MaterialTheme.colorScheme.onErrorContainer
-    } else {
-        MaterialTheme.colorScheme.onSecondaryContainer
-    }
+    val badgeBg = animateColorAsState(
+        targetValue = if (isHigh) {
+            MaterialTheme.colorScheme.errorContainer
+        } else {
+            MaterialTheme.colorScheme.secondaryContainer
+        },
+        animationSpec = tween(180),
+        label = "slider_badge_bg"
+    ).value
+    val badgeFg = animateColorAsState(
+        targetValue = if (isHigh) {
+            MaterialTheme.colorScheme.onErrorContainer
+        } else {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        },
+        animationSpec = tween(180),
+        label = "slider_badge_fg"
+    ).value
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(

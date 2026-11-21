@@ -1,5 +1,6 @@
 package app.spectr.mood.ui.doctor
 
+import androidx.compose.runtime.Immutable
 import app.spectr.mood.domain.calendar.CalendarMonthGrid
 import app.spectr.mood.domain.report.DoctorReportSnapshot
 import app.spectr.mood.domain.report.ReportDailyRow
@@ -15,6 +16,7 @@ import java.time.YearMonth
  * By construction, all [dailyRows] are produced with `includePersonalNotesAndMoments = false`
  * so private text notes, sleep comments, and momentary check-ins are never exposed in Doctor Mode.
  */
+@Immutable
 data class DoctorViewUiState(
     val today: LocalDate = LocalDate.now(),
     val selectedPeriod: OverviewPeriodOption = OverviewPeriodOption.DAYS_30,

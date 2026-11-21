@@ -1,5 +1,7 @@
 package app.spectr.mood.ui.overview
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -26,12 +28,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -53,6 +57,7 @@ import app.spectr.mood.domain.chart.ChartDateTick
 import app.spectr.mood.domain.chart.ChartGeometry
 import app.spectr.mood.domain.chart.OverviewChartData
 import app.spectr.mood.domain.chart.OverviewChartPoint
+import app.spectr.mood.ui.components.EmptyChartsVectorIllustration
 import app.spectr.mood.ui.diary.dailyDynamicsLabel
 import app.spectr.mood.ui.diary.formatSignedMood
 import app.spectr.mood.ui.diary.formatSleepDuration
@@ -66,6 +71,12 @@ private const val CHART_PAD_RIGHT_DUAL_DP = 38f
 private const val CHART_PLOT_INSET_DP = 10f
 private const val CHART_PAD_TOP_DP = 12f
 private const val CHART_PAD_BOTTOM_DP = 24f
+
+private val MOOD_Y_TICKS = listOf(-5, -2, 0, 2, 5)
+private val ENERGY_Y_TICKS = listOf(0, 5, 10)
+private val ANX_IRR_Y_TICKS = listOf(0, 3, 7, 10)
+private val CROSSHAIR_DASH_EFFECT = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
+private val THRESHOLD_DASH_EFFECT = PathEffect.dashPathEffect(floatArrayOf(10f, 8f))
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -147,8 +158,9 @@ internal fun EmptyChartsCard(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            EmptyChartsVectorIllustration()
             Text(
                 text = stringResource(R.string.overview_charts_empty_title),
                 style = MaterialTheme.typography.titleMedium,
@@ -180,13 +192,20 @@ internal fun MoodTrendChartCard(
         color = colorScheme.onSurfaceVariant
     )
     val selectedPoint = selectedIndex?.let { chartData.points.getOrNull(it) }
+    val fractions = remember(chartData.points) { chartData.points.map { it.xFraction } }
+    val linePath = remember { Path() }
+    val fillPath = remember { Path() }
 
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
         shape = RoundedCornerShape(20.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .animateContentSize(animationSpec = tween(180))
+        ) {
             Text(
                 text = stringResource(R.string.overview_chart_mood_title),
                 style = MaterialTheme.typography.titleMedium,
@@ -204,7 +223,6 @@ internal fun MoodTrendChartCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            val fractions = chartData.points.map { it.xFraction }
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -225,7 +243,9 @@ internal fun MoodTrendChartCard(
                     textMeasurer = textMeasurer,
                     axisLabelStyle = axisLabelStyle,
                     moodColors = moodColors,
-                    colorScheme = colorScheme
+                    colorScheme = colorScheme,
+                    linePath = linePath,
+                    fillPath = fillPath
                 )
             }
         }
@@ -241,7 +261,9 @@ private fun DrawScope.drawMoodTrendCanvas(
     textMeasurer: TextMeasurer,
     axisLabelStyle: TextStyle,
     moodColors: app.spectr.mood.ui.theme.MoodColorScale,
-    colorScheme: androidx.compose.material3.ColorScheme
+    colorScheme: androidx.compose.material3.ColorScheme,
+    linePath: Path,
+    fillPath: Path
 ) {
     val left = CHART_PAD_LEFT_DP.dp.toPx()
     val right = size.width - CHART_PAD_RIGHT_DP.dp.toPx()
@@ -251,7 +273,7 @@ private fun DrawScope.drawMoodTrendCanvas(
     val top = CHART_PAD_TOP_DP.dp.toPx()
     val bottom = size.height - CHART_PAD_BOTTOM_DP.dp.toPx()
 
-    listOf(-5, -2, 0, 2, 5).forEach { tick ->
+    MOOD_Y_TICKS.forEach { tick ->
         val y = ChartGeometry.valueToY(tick.toDouble(), -5.0, 5.0, top, bottom)
         val isZero = tick == 0
         drawLine(
@@ -280,23 +302,38 @@ private fun DrawScope.drawMoodTrendCanvas(
             start = Offset(selX, top),
             end = Offset(selX, bottom),
             strokeWidth = 1.5.dp.toPx(),
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
+            pathEffect = CROSSHAIR_DASH_EFFECT
         )
     }
 
-    val coords = chartData.points.map { point ->
-        Offset(
-            x = ChartGeometry.fractionToX(point.xFraction, plotLeft, plotRight),
-            y = ChartGeometry.valueToY(point.mood.toDouble(), -5.0, 5.0, top, bottom)
-        )
-    }
-    if (coords.size >= 2) {
-        val linePath = Path().apply {
-            moveTo(coords.first().x, coords.first().y)
-            for (i in 1 until coords.size) {
-                lineTo(coords[i].x, coords[i].y)
-            }
+    val points = chartData.points
+    if (points.size >= 2) {
+        val firstX = ChartGeometry.fractionToX(points.first().xFraction, plotLeft, plotRight)
+        val firstY = ChartGeometry.valueToY(points.first().mood.toDouble(), -5.0, 5.0, top, bottom)
+        val lastX = ChartGeometry.fractionToX(points.last().xFraction, plotLeft, plotRight)
+        linePath.rewind()
+        fillPath.rewind()
+        linePath.moveTo(firstX, firstY)
+        fillPath.moveTo(firstX, bottom)
+        fillPath.lineTo(firstX, firstY)
+        for (i in 1 until points.size) {
+            val pt = points[i]
+            val px = ChartGeometry.fractionToX(pt.xFraction, plotLeft, plotRight)
+            val py = ChartGeometry.valueToY(pt.mood.toDouble(), -5.0, 5.0, top, bottom)
+            linePath.lineTo(px, py)
+            fillPath.lineTo(px, py)
         }
+        fillPath.lineTo(lastX, bottom)
+        fillPath.close()
+
+        drawPath(
+            path = fillPath,
+            brush = Brush.verticalGradient(
+                colors = listOf(colorScheme.primary.copy(alpha = 0.16f), Color.Transparent),
+                startY = top,
+                endY = bottom
+            )
+        )
         drawPath(
             path = linePath,
             color = colorScheme.primary,
@@ -308,9 +345,12 @@ private fun DrawScope.drawMoodTrendCanvas(
         )
     }
 
-    val baseRadius = if (coords.size > 35) 3.dp.toPx() else 4.5.dp.toPx()
-    chartData.points.forEachIndexed { idx, point ->
-        val center = coords[idx]
+    val baseRadius = if (points.size > 35) 3.dp.toPx() else 4.5.dp.toPx()
+    points.forEachIndexed { idx, point ->
+        val center = Offset(
+            x = ChartGeometry.fractionToX(point.xFraction, plotLeft, plotRight),
+            y = ChartGeometry.valueToY(point.mood.toDouble(), -5.0, 5.0, top, bottom)
+        )
         val isSelected = idx == selectedIndex
         val radius = if (isSelected) 6.5.dp.toPx() else baseRadius
         if (point.isMixedDay) {
@@ -322,17 +362,9 @@ private fun DrawScope.drawMoodTrendCanvas(
             )
         }
         if (isSelected) {
-            drawCircle(
-                color = colorScheme.primary.copy(alpha = 0.22f),
-                radius = radius + 5.dp.toPx(),
-                center = center
-            )
+            drawCircle(color = colorScheme.primary.copy(alpha = 0.22f), radius = radius + 5.dp.toPx(), center = center)
         }
-        drawCircle(
-            color = moodColors.containerColor(point.mood),
-            radius = radius,
-            center = center
-        )
+        drawCircle(color = moodColors.containerColor(point.mood), radius = radius, center = center)
         drawCircle(
             color = colorScheme.surfaceContainerLow,
             radius = radius,
@@ -342,13 +374,13 @@ private fun DrawScope.drawMoodTrendCanvas(
     }
 
     drawXAxisDateTicks(
-        textMeasurer = textMeasurer,
-        ticks = chartData.xTicks,
-        referenceYear = referenceYear,
-        style = axisLabelStyle,
-        left = plotLeft,
-        right = plotRight,
-        baselineY = bottom + 6.dp.toPx()
+        textMeasurer,
+        chartData.xTicks,
+        referenceYear,
+        axisLabelStyle,
+        plotLeft,
+        plotRight,
+        bottom + 6.dp.toPx()
     )
 }
 
@@ -369,13 +401,19 @@ internal fun EnergySleepChartCard(
     )
     val energyColor = colorScheme.primary
     val selectedPoint = selectedIndex?.let { chartData.points.getOrNull(it) }
+    val fractions = remember(chartData.points) { chartData.points.map { it.xFraction } }
+    val energyLinePath = remember { Path() }
 
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
         shape = RoundedCornerShape(20.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .animateContentSize(animationSpec = tween(180))
+        ) {
             Text(
                 text = stringResource(R.string.overview_chart_energy_sleep_title),
                 style = MaterialTheme.typography.titleMedium,
@@ -401,8 +439,6 @@ internal fun EnergySleepChartCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            val fractions = chartData.points.map { it.xFraction }
-
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -427,7 +463,8 @@ internal fun EnergySleepChartCard(
                         shortSleep = colorScheme.error,
                         grid = colorScheme.outlineVariant.copy(alpha = 0.45f),
                         surface = colorScheme.surfaceContainerLow
-                    )
+                    ),
+                    linePath = energyLinePath
                 )
             }
         }
@@ -448,7 +485,8 @@ private fun DrawScope.drawEnergySleepCanvas(
     selectedIndex: Int?,
     textMeasurer: TextMeasurer,
     axisLabelStyle: TextStyle,
-    palette: EnergySleepPalette
+    palette: EnergySleepPalette,
+    linePath: Path
 ) {
     val left = CHART_PAD_LEFT_DP.dp.toPx()
     val right = size.width - CHART_PAD_RIGHT_DUAL_DP.dp.toPx()
@@ -459,7 +497,7 @@ private fun DrawScope.drawEnergySleepCanvas(
     val bottom = size.height - CHART_PAD_BOTTOM_DP.dp.toPx()
     val sleepMax = chartData.sleepAxisMaxHours
 
-    listOf(0, 5, 10).forEach { energyTick ->
+    ENERGY_Y_TICKS.forEach { energyTick ->
         val y = ChartGeometry.valueToY(energyTick.toDouble(), 0.0, 10.0, top, bottom)
         drawLine(color = palette.grid, start = Offset(left, y), end = Offset(right, y), strokeWidth = 1.dp.toPx())
         drawAxisLabelRightAligned(textMeasurer, energyTick.toString(), axisLabelStyle, left - 6.dp.toPx(), y)
@@ -499,7 +537,7 @@ private fun DrawScope.drawEnergySleepCanvas(
         start = Offset(left, thresholdY),
         end = Offset(right, thresholdY),
         strokeWidth = 1.4.dp.toPx(),
-        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f))
+        pathEffect = THRESHOLD_DASH_EFFECT
     )
 
     selectedIndex?.let { chartData.points.getOrNull(it) }?.let { point ->
@@ -509,7 +547,7 @@ private fun DrawScope.drawEnergySleepCanvas(
             start = Offset(selX, top),
             end = Offset(selX, bottom),
             strokeWidth = 1.5.dp.toPx(),
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
+            pathEffect = CROSSHAIR_DASH_EFFECT
         )
     }
 
@@ -519,7 +557,7 @@ private fun DrawScope.drawEnergySleepCanvas(
             y = ChartGeometry.valueToY(point.energy.toDouble(), 0.0, 10.0, top, bottom)
         )
     }
-    drawLineSeries(energyCoords, palette.energy, selectedIndex, palette.surface)
+    drawLineSeries(energyCoords, palette.energy, selectedIndex, palette.surface, linePath)
 
     drawXAxisDateTicks(
         textMeasurer,
@@ -551,13 +589,20 @@ internal fun AnxietyIrritabilityChartCard(
     val irritabilityColor = colorScheme.error
     val thresholdColor = colorScheme.outline.copy(alpha = 0.6f)
     val selectedPoint = selectedIndex?.let { chartData.points.getOrNull(it) }
+    val fractions = remember(chartData.points) { chartData.points.map { it.xFraction } }
+    val anxietyPath = remember { Path() }
+    val irritabilityPath = remember { Path() }
 
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
         shape = RoundedCornerShape(20.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .animateContentSize(animationSpec = tween(180))
+        ) {
             Text(
                 text = stringResource(R.string.overview_chart_anxiety_irritability_title),
                 style = MaterialTheme.typography.titleMedium,
@@ -583,8 +628,6 @@ internal fun AnxietyIrritabilityChartCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            val fractions = chartData.points.map { it.xFraction }
-
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -606,7 +649,7 @@ internal fun AnxietyIrritabilityChartCard(
                 val bottom = size.height - CHART_PAD_BOTTOM_DP.dp.toPx()
 
                 // Y-axis ticks (0, 3, 7, 10)
-                listOf(0, 3, 7, 10).forEach { tick ->
+                ANX_IRR_Y_TICKS.forEach { tick ->
                     val y = ChartGeometry.valueToY(tick.toDouble(), 0.0, 10.0, top, bottom)
                     val isThreshold = tick == 7
                     drawLine(
@@ -614,7 +657,7 @@ internal fun AnxietyIrritabilityChartCard(
                         start = Offset(left, y),
                         end = Offset(right, y),
                         strokeWidth = if (isThreshold) 1.3.dp.toPx() else 1.dp.toPx(),
-                        pathEffect = if (isThreshold) PathEffect.dashPathEffect(floatArrayOf(10f, 8f)) else null
+                        pathEffect = if (isThreshold) THRESHOLD_DASH_EFFECT else null
                     )
                     drawAxisLabelRightAligned(
                         textMeasurer = textMeasurer,
@@ -633,7 +676,7 @@ internal fun AnxietyIrritabilityChartCard(
                         start = Offset(selX, top),
                         end = Offset(selX, bottom),
                         strokeWidth = 1.5.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
+                        pathEffect = CROSSHAIR_DASH_EFFECT
                     )
                 }
 
@@ -654,13 +697,15 @@ internal fun AnxietyIrritabilityChartCard(
                     coords = anxietyCoords,
                     color = anxietyColor,
                     selectedIndex = selectedIndex,
-                    surfaceColor = colorScheme.surfaceContainerLow
+                    surfaceColor = colorScheme.surfaceContainerLow,
+                    path = anxietyPath
                 )
                 drawLineSeries(
                     coords = irritabilityCoords,
                     color = irritabilityColor,
                     selectedIndex = selectedIndex,
-                    surfaceColor = colorScheme.surfaceContainerLow
+                    surfaceColor = colorScheme.surfaceContainerLow,
+                    path = irritabilityPath
                 )
 
                 drawXAxisDateTicks(
@@ -855,13 +900,18 @@ private fun Modifier.chartTouchInteraction(
         }
     }
 
-private fun DrawScope.drawLineSeries(coords: List<Offset>, color: Color, selectedIndex: Int?, surfaceColor: Color) {
+private fun DrawScope.drawLineSeries(
+    coords: List<Offset>,
+    color: Color,
+    selectedIndex: Int?,
+    surfaceColor: Color,
+    path: Path
+) {
     if (coords.size >= 2) {
-        val path = Path().apply {
-            moveTo(coords.first().x, coords.first().y)
-            for (i in 1 until coords.size) {
-                lineTo(coords[i].x, coords[i].y)
-            }
+        path.rewind()
+        path.moveTo(coords.first().x, coords.first().y)
+        for (i in 1 until coords.size) {
+            path.lineTo(coords[i].x, coords[i].y)
         }
         drawPath(
             path = path,

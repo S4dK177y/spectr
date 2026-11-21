@@ -11,6 +11,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -99,6 +100,7 @@ fun MoreRoute(
     onLockAppNow: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
+    onOpenOnboardingTour: () -> Unit = {},
     viewModel: MoreViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -186,6 +188,7 @@ fun MoreRoute(
         onSavePdfToFileClick = { savePdfLauncher.launch(viewModel.suggestedPdfFileName()) },
         onOpenDoctorMode = onOpenDoctorMode,
         onOpenGuide = onOpenGuide,
+        onOpenOnboardingTour = onOpenOnboardingTour,
         onLockAppNow = onLockAppNow,
         onThemeModeChange = onThemeModeChange,
         onThemePaletteChange = onThemePaletteChange,
@@ -212,22 +215,24 @@ fun MoreScreen(
     onRequestNotificationPermission: () -> Unit,
     onRequestExactAlarmPermission: () -> Unit,
     onPinWidgetClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenOnboardingTour: () -> Unit = {}
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item(key = "doctor_tools_card") {
+        item(key = "doctor_tools_card", contentType = "doctor_tools") {
             DoctorToolsAndGuideCard(
                 onOpenPdfExport = { onIntent(MoreIntent.OpenPdfSheet) },
                 onOpenDoctorMode = onOpenDoctorMode,
-                onOpenGuide = onOpenGuide
+                onOpenGuide = onOpenGuide,
+                onOpenOnboardingTour = onOpenOnboardingTour
             )
         }
 
-        item(key = "security_card") {
+        item(key = "security_card", contentType = "security") {
             LocalSecurityCard(
                 config = state.securityConfig,
                 biometricAvailability = state.biometricAvailability,
@@ -236,7 +241,7 @@ fun MoreScreen(
             )
         }
 
-        item(key = "reminders_card") {
+        item(key = "reminders_card", contentType = "reminders") {
             RemindersCard(
                 state = state,
                 onIntent = onIntent,
@@ -245,14 +250,14 @@ fun MoreScreen(
             )
         }
 
-        item(key = "widget_card") {
+        item(key = "widget_card", contentType = "widget") {
             WidgetCard(
                 canPinWidget = canPinWidget,
                 onPinWidgetClick = onPinWidgetClick
             )
         }
 
-        item(key = "theme_card") {
+        item(key = "theme_card", contentType = "theme") {
             ThemeSettingsCard(
                 themeConfig = themeConfig,
                 onThemeModeChange = onThemeModeChange,
@@ -260,7 +265,7 @@ fun MoreScreen(
             )
         }
 
-        item(key = "privacy_card") {
+        item(key = "privacy_card", contentType = "privacy") {
             PrivacyBadgeCard()
         }
     }
@@ -367,51 +372,53 @@ private fun RemindersCard(
                 onCheckedChange = { onIntent(MoreIntent.SetDailyReminderEnabled(it)) }
             )
 
-            if (state.reminderConfig.dailyEnabled) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .clickable { onIntent(MoreIntent.OpenDailyTimePicker) }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+            AnimatedVisibility(visible = state.reminderConfig.dailyEnabled) {
+                Column {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable { onIntent(MoreIntent.OpenDailyTimePicker) }
                     ) {
                         Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Icon(
-                                imageVector = Icons.Outlined.AccessTime,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.AccessTime,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.reminders_daily_time_label),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                             Text(
-                                text = stringResource(R.string.reminders_daily_time_label),
-                                style = MaterialTheme.typography.bodyMedium
+                                text = formattedDailyTime,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
-                        Text(
-                            text = formattedDailyTime,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
                     }
-                }
 
-                Spacer(modifier = Modifier.height(8.dp))
-                DailyScheduleStatusText(
-                    state = state,
-                    formattedDailyTime = formattedDailyTime,
-                    onClearSnooze = { onIntent(MoreIntent.ClearDailySnooze) }
-                )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    DailyScheduleStatusText(
+                        state = state,
+                        formattedDailyTime = formattedDailyTime,
+                        onClearSnooze = { onIntent(MoreIntent.ClearDailySnooze) }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(14.dp))

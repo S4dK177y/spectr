@@ -1,8 +1,15 @@
 package app.spectr.mood.ui.diary
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -86,57 +93,72 @@ fun DiaryRoute(
 
 @Composable
 fun DiaryScreen(state: DiaryUiState, onIntent: (DiaryIntent) -> Unit, modifier: Modifier = Modifier) {
+    val onAddMoment = androidx.compose.runtime.remember(onIntent) {
+        { onIntent(DiaryIntent.OpenNewMoment) }
+    }
+    val onEditMoment = androidx.compose.runtime.remember<(MomentCheckIn) -> Unit>(onIntent) {
+        { onIntent(DiaryIntent.OpenEditMoment(it)) }
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item(key = "date_switcher") {
+        item(key = "date_switcher", contentType = "date_switcher") {
             DateSwitcherCard(
-                state = state,
+                selectedDate = state.selectedDate,
+                today = state.today,
+                isToday = state.isToday,
+                isYesterday = state.isYesterday,
+                canGoNextDay = state.canGoNextDay,
+                hasSavedEntry = state.hasSavedEntry,
+                hasUnsavedChanges = state.hasUnsavedChanges,
                 onIntent = onIntent
             )
         }
 
-        item(key = "moments_section") {
+        item(key = "moments_section", contentType = "moments_section") {
             MomentsSectionCard(
                 moments = state.moments,
-                onAddMoment = { onIntent(DiaryIntent.OpenNewMoment) },
-                onEditMoment = { onIntent(DiaryIntent.OpenEditMoment(it)) }
+                onAddMoment = onAddMoment,
+                onEditMoment = onEditMoment
             )
         }
 
-        item(key = "card_mood") {
+        item(key = "card_mood", contentType = "card_mood") {
             MoodCard(
                 form = state.form,
                 onIntent = onIntent
             )
         }
 
-        item(key = "card_sleep_energy") {
+        item(key = "card_sleep_energy", contentType = "card_sleep_energy") {
             SleepAndEnergyCard(
                 form = state.form,
                 onIntent = onIntent
             )
         }
 
-        item(key = "card_anxiety_symptoms") {
+        item(key = "card_anxiety_symptoms", contentType = "card_anxiety_symptoms") {
             AnxietySymptomsCard(
                 form = state.form,
                 onIntent = onIntent
             )
         }
 
-        item(key = "card_details_note") {
+        item(key = "card_details_note", contentType = "card_details_note") {
             DetailsAndNoteCard(
                 form = state.form,
                 onIntent = onIntent
             )
         }
 
-        item(key = "diary_footer_actions") {
+        item(key = "diary_footer_actions", contentType = "diary_footer_actions") {
             DiaryActionFooter(
-                state = state,
+                hasSavedEntry = state.hasSavedEntry,
+                hasUnsavedChanges = state.hasUnsavedChanges,
+                canSaveEntry = state.canSaveEntry,
                 onIntent = onIntent
             )
         }
@@ -183,11 +205,16 @@ fun DiaryScreen(state: DiaryUiState, onIntent: (DiaryIntent) -> Unit, modifier: 
 }
 
 @Composable
-private fun DiaryActionFooter(state: DiaryUiState, onIntent: (DiaryIntent) -> Unit) {
-    val isUpToDateSaved = state.hasSavedEntry && !state.hasUnsavedChanges
+private fun DiaryActionFooter(
+    hasSavedEntry: Boolean,
+    hasUnsavedChanges: Boolean,
+    canSaveEntry: Boolean,
+    onIntent: (DiaryIntent) -> Unit
+) {
+    val isUpToDateSaved = hasSavedEntry && !hasUnsavedChanges
     val buttonLabel = when {
-        !state.hasSavedEntry -> stringResource(R.string.diary_save_button)
-        state.hasUnsavedChanges -> stringResource(R.string.diary_update_button)
+        !hasSavedEntry -> stringResource(R.string.diary_save_button)
+        hasUnsavedChanges -> stringResource(R.string.diary_update_button)
         else -> stringResource(R.string.diary_saved_button)
     }
 
@@ -199,30 +226,42 @@ private fun DiaryActionFooter(state: DiaryUiState, onIntent: (DiaryIntent) -> Un
     ) {
         Button(
             onClick = { onIntent(DiaryIntent.SaveDailyEntry) },
-            enabled = state.canSaveEntry,
+            enabled = canSaveEntry,
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp)
         ) {
-            Icon(
-                imageVector = if (isUpToDateSaved) Icons.Outlined.Check else Icons.Outlined.Save,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = buttonLabel)
+            AnimatedContent(
+                targetState = isUpToDateSaved to buttonLabel,
+                transitionSpec = {
+                    fadeIn(tween(180)) togetherWith fadeOut(tween(140))
+                },
+                label = "diary_save_button_state"
+            ) { (savedClean, label) ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (savedClean) Icons.Outlined.Check else Icons.Outlined.Save,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = label)
+                }
+            }
         }
 
-        if (state.hasSavedEntry) {
-            Spacer(modifier = Modifier.height(6.dp))
-            TextButton(
-                onClick = { onIntent(DiaryIntent.RequestDeleteEntry) },
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text(text = stringResource(R.string.diary_delete_entry_button))
+        AnimatedVisibility(visible = hasSavedEntry) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Spacer(modifier = Modifier.height(6.dp))
+                TextButton(
+                    onClick = { onIntent(DiaryIntent.RequestDeleteEntry) },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(text = stringResource(R.string.diary_delete_entry_button))
+                }
             }
         }
     }

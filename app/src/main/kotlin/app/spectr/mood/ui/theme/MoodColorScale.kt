@@ -14,20 +14,27 @@ data class MoodColorScale(
     private val colorsByScore: Map<Int, Color>,
     private val contentColorsByScore: Map<Int, Color>
 ) {
+    private val indexedContainerColors: List<Color> =
+        (MIN_MOOD..MAX_MOOD).map { score -> colorsByScore.getValue(score) }
+
+    private val indexedContentColors: List<Color> =
+        (MIN_MOOD..MAX_MOOD).map { score -> contentColorsByScore.getValue(score) }
+
     /**
-     * Returns the background color for any mood score in [-5, +5] (clamped safely).
+     * Returns the background color for any mood score in [-5, +5] (clamped safely)
+     * with O(1) index access and zero boxing allocations in 120 Hz Canvas draw loops.
      */
     fun containerColor(score: Int): Color {
-        val clamped = score.coerceIn(MIN_MOOD, MAX_MOOD)
-        return colorsByScore.getValue(clamped)
+        val index = score.coerceIn(MIN_MOOD, MAX_MOOD) - MIN_MOOD
+        return indexedContainerColors[index]
     }
 
     /**
      * Returns a legible foreground text/icon color paired with [containerColor].
      */
     fun contentColor(score: Int): Color {
-        val clamped = score.coerceIn(MIN_MOOD, MAX_MOOD)
-        return contentColorsByScore.getValue(clamped)
+        val index = score.coerceIn(MIN_MOOD, MAX_MOOD) - MIN_MOOD
+        return indexedContentColors[index]
     }
 
     companion object {

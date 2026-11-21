@@ -1,6 +1,7 @@
 package app.spectr.mood.data.local.prefs
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import app.spectr.mood.domain.model.ThemeConfig
@@ -10,12 +11,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /**
- * Local DataStore repository for visual theme settings.
+ * Local DataStore repository for visual theme settings and first-launch onboarding completion state.
  */
 class ThemePreferencesRepository(private val context: Context) {
     private object Keys {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val THEME_PALETTE = stringPreferencesKey("theme_palette")
+        val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
     }
 
     val themeConfig: Flow<ThemeConfig> = context.spectrPreferencesDataStore.data.map { prefs ->
@@ -28,6 +30,10 @@ class ThemePreferencesRepository(private val context: Context) {
         ThemeConfig(mode = mode, palette = palette)
     }
 
+    val onboardingCompleted: Flow<Boolean> = context.spectrPreferencesDataStore.data.map { prefs ->
+        prefs[Keys.ONBOARDING_COMPLETED] ?: false
+    }
+
     suspend fun setThemeMode(mode: ThemeMode) {
         context.spectrPreferencesDataStore.edit { prefs ->
             prefs[Keys.THEME_MODE] = mode.name
@@ -37,6 +43,12 @@ class ThemePreferencesRepository(private val context: Context) {
     suspend fun setThemePalette(palette: ThemePalette) {
         context.spectrPreferencesDataStore.edit { prefs ->
             prefs[Keys.THEME_PALETTE] = palette.name
+        }
+    }
+
+    suspend fun setOnboardingCompleted(completed: Boolean) {
+        context.spectrPreferencesDataStore.edit { prefs ->
+            prefs[Keys.ONBOARDING_COMPLETED] = completed
         }
     }
 }

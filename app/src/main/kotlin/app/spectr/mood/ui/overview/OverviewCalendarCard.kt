@@ -54,6 +54,17 @@ import java.time.LocalDate
 import java.time.Month
 import java.time.YearMonth
 
+private val WEEKDAY_HEADER_RES = listOf(
+    R.string.weekday_mon_short,
+    R.string.weekday_tue_short,
+    R.string.weekday_wed_short,
+    R.string.weekday_thu_short,
+    R.string.weekday_fri_short,
+    R.string.weekday_sat_short,
+    R.string.weekday_sun_short
+)
+private val MOOD_LEGEND_SCORES = (MoodColorScale.MIN_MOOD..MoodColorScale.MAX_MOOD).toList()
+
 @Composable
 internal fun OverviewCalendarCard(
     state: OverviewUiState,
@@ -207,20 +218,11 @@ internal fun OverviewCalendarCard(
 
 @Composable
 private fun WeekdayHeaderRow() {
-    val labels = listOf(
-        R.string.weekday_mon_short,
-        R.string.weekday_tue_short,
-        R.string.weekday_wed_short,
-        R.string.weekday_thu_short,
-        R.string.weekday_fri_short,
-        R.string.weekday_sat_short,
-        R.string.weekday_sun_short
-    )
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(5.dp)
     ) {
-        labels.forEachIndexed { index, labelRes ->
+        WEEKDAY_HEADER_RES.forEachIndexed { index, labelRes ->
             val isWeekend = index >= 5
             Text(
                 text = stringResource(labelRes),
@@ -312,7 +314,6 @@ private fun resolveCalendarTileColors(cell: CalendarDayCell): Pair<Color, Color>
 @Composable
 private fun MoodColorLegend() {
     val moodColors = LocalMoodColors.current
-    val scores = (MoodColorScale.MIN_MOOD..MoodColorScale.MAX_MOOD).toList()
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
@@ -320,7 +321,7 @@ private fun MoodColorLegend() {
             horizontalArrangement = Arrangement.spacedBy(2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            scores.forEach { score ->
+            MOOD_LEGEND_SCORES.forEach { score ->
                 Box(
                     modifier = Modifier
                         .weight(1f)
