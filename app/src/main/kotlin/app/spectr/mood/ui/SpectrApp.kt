@@ -1,56 +1,41 @@
 package app.spectr.mood.ui
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import app.spectr.mood.R
 import app.spectr.mood.domain.model.ThemeConfig
 import app.spectr.mood.domain.model.ThemeMode
 import app.spectr.mood.domain.model.ThemePalette
+import app.spectr.mood.platform.SpectrLaunchRequest
+import app.spectr.mood.platform.SpectrLaunchTarget
 import app.spectr.mood.ui.diary.DiaryRoute
 import app.spectr.mood.ui.diary.DiaryScreen
 import app.spectr.mood.ui.diary.sampleDiaryPreviewState
+import app.spectr.mood.ui.more.MoreRoute
+import app.spectr.mood.ui.more.MoreScreen
+import app.spectr.mood.ui.more.sampleMorePreviewState
 import app.spectr.mood.ui.navigation.SpectrDestination
 import app.spectr.mood.ui.overview.OverviewRoute
 import app.spectr.mood.ui.overview.OverviewScreen
@@ -68,12 +53,16 @@ fun SpectrApp(
     onThemeModeChange: (ThemeMode) -> Unit,
     onThemePaletteChange: (ThemePalette) -> Unit,
     modifier: Modifier = Modifier,
-    diaryContent: @Composable (SnackbarHostState, LocalDate?, () -> Unit) -> Unit =
-        { hostState, requestedDate, onConsumed ->
+    launchRequest: SpectrLaunchRequest? = null,
+    onLaunchRequestConsumed: () -> Unit = {},
+    diaryContent: @Composable (SnackbarHostState, LocalDate?, () -> Unit, Long, () -> Unit) -> Unit =
+        { hostState, requestedDate, onDateConsumed, openMomentId, onMomentConsumed ->
             DiaryRoute(
                 snackbarHostState = hostState,
                 requestedDate = requestedDate,
-                onRequestedDateConsumed = onConsumed
+                onRequestedDateConsumed = onDateConsumed,
+                openMomentRequestId = openMomentId,
+                onOpenMomentRequestConsumed = onMomentConsumed
             )
         },
     overviewContent: @Composable ((LocalDate) -> Unit) -> Unit = { onOpenDiaryDate ->
@@ -81,11 +70,39 @@ fun SpectrApp(
     },
     scalesContent: @Composable (SnackbarHostState) -> Unit = { hostState ->
         ScalesRoute(snackbarHostState = hostState)
+    },
+    moreContent: @Composable (SnackbarHostState) -> Unit = { hostState ->
+        MoreRoute(
+            themeConfig = themeConfig,
+            onThemeModeChange = onThemeModeChange,
+            onThemePaletteChange = onThemePaletteChange,
+            snackbarHostState = hostState
+        )
     }
 ) {
     var currentTab by rememberSaveable { mutableStateOf(SpectrDestination.DIARY) }
     var requestedDiaryDateIso by rememberSaveable { mutableStateOf<String?>(null) }
+    var openMomentRequestId by rememberSaveable { mutableLongStateOf(0L) }
     val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(launchRequest) {
+        if (launchRequest != null) {
+            when (launchRequest.target) {
+                SpectrLaunchTarget.DAILY_SUMMARY -> {
+                    requestedDiaryDateIso = LocalDate.now().toString()
+                    currentTab = SpectrDestination.DIARY
+                }
+                SpectrLaunchTarget.NEW_MOMENT -> {
+                    openMomentRequestId = launchRequest.id
+                    currentTab = SpectrDestination.DIARY
+                }
+                SpectrLaunchTarget.SCALES -> {
+                    currentTab = SpectrDestination.SCALES
+                }
+            }
+            onLaunchRequestConsumed()
+        }
+    }
 
     val openDiaryDate: (LocalDate) -> Unit = { date ->
         requestedDiaryDateIso = date.toString()
@@ -139,196 +156,46 @@ fun SpectrApp(
             when (tab) {
                 SpectrDestination.DIARY -> diaryContent(
                     snackbarHostState,
-                    requestedDiaryDateIso?.let(LocalDate::parse)
-                ) { requestedDiaryDateIso = null }
+                    requestedDiaryDateIso?.let(LocalDate::parse),
+                    { requestedDiaryDateIso = null },
+                    openMomentRequestId,
+                    { openMomentRequestId = 0L }
+                )
                 SpectrDestination.OVERVIEW -> overviewContent(openDiaryDate)
                 SpectrDestination.SCALES -> scalesContent(snackbarHostState)
-                SpectrDestination.MORE -> MoreShellScreen(
-                    themeConfig = themeConfig,
-                    onThemeModeChange = onThemeModeChange,
-                    onThemePaletteChange = onThemePaletteChange
-                )
+                SpectrDestination.MORE -> moreContent(snackbarHostState)
             }
         }
     }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun MoreShellScreen(
-    themeConfig: ThemeConfig,
-    onThemeModeChange: (ThemeMode) -> Unit,
-    onThemePaletteChange: (ThemePalette) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                ),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = stringResource(R.string.theme_section_title),
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = stringResource(R.string.theme_mode_label),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        ThemeMode.entries.forEach { mode ->
-                            FilterChip(
-                                selected = themeConfig.mode == mode,
-                                onClick = { onThemeModeChange(mode) },
-                                label = { Text(text = themeModeLabel(mode)) }
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Text(
-                        text = stringResource(R.string.theme_palette_label),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ThemePalette.entries.forEach { palette ->
-                        PaletteRow(
-                            title = themePaletteTitle(palette),
-                            subtitle = themePaletteDesc(palette),
-                            selected = themeConfig.palette == palette,
-                            onClick = { onThemePaletteChange(palette) }
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            PrivacyBadgeCard()
-        }
-    }
-}
-
-@Composable
-private fun PaletteRow(title: String, subtitle: String, selected: Boolean, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp, horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        RadioButton(
-            selected = selected,
-            onClick = onClick
-        )
-        Column(modifier = Modifier.padding(start = 8.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun PrivacyBadgeCard(modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        ),
-        shape = RoundedCornerShape(20.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Lock,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-            Column {
-                Text(
-                    text = stringResource(R.string.privacy_badge_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = stringResource(R.string.privacy_badge_subtitle),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun themeModeLabel(mode: ThemeMode): String = when (mode) {
-    ThemeMode.SYSTEM -> stringResource(R.string.theme_mode_system)
-    ThemeMode.LIGHT -> stringResource(R.string.theme_mode_light)
-    ThemeMode.DARK -> stringResource(R.string.theme_mode_dark)
-    ThemeMode.AMOLED -> stringResource(R.string.theme_mode_amoled)
-}
-
-@Composable
-private fun themePaletteTitle(palette: ThemePalette): String = when (palette) {
-    ThemePalette.DYNAMIC -> stringResource(R.string.theme_palette_dynamic)
-    ThemePalette.MINIMAL -> stringResource(R.string.theme_palette_minimal)
-    ThemePalette.WARM_PAPER -> stringResource(R.string.theme_palette_warm_paper)
-    ThemePalette.SOFT_SLATE -> stringResource(R.string.theme_palette_soft_slate)
-}
-
-@Composable
-private fun themePaletteDesc(palette: ThemePalette): String = when (palette) {
-    ThemePalette.DYNAMIC -> stringResource(R.string.theme_palette_dynamic_desc)
-    ThemePalette.MINIMAL -> stringResource(R.string.theme_palette_minimal_desc)
-    ThemePalette.WARM_PAPER -> stringResource(R.string.theme_palette_warm_paper_desc)
-    ThemePalette.SOFT_SLATE -> stringResource(R.string.theme_palette_soft_slate_desc)
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun SpectrAppLightPreview() {
-    SpectrTheme(
-        themeConfig = ThemeConfig(mode = ThemeMode.LIGHT, palette = ThemePalette.SOFT_SLATE)
-    ) {
+    val config = ThemeConfig(mode = ThemeMode.LIGHT, palette = ThemePalette.SOFT_SLATE)
+    SpectrTheme(themeConfig = config) {
         SpectrApp(
-            themeConfig = ThemeConfig(mode = ThemeMode.LIGHT, palette = ThemePalette.SOFT_SLATE),
+            themeConfig = config,
             onThemeModeChange = {},
             onThemePaletteChange = {},
-            diaryContent = { _, _, _ -> DiaryScreen(state = sampleDiaryPreviewState(), onIntent = {}) },
+            diaryContent = { _, _, _, _, _ -> DiaryScreen(state = sampleDiaryPreviewState(), onIntent = {}) },
             overviewContent = {
                 OverviewScreen(state = sampleOverviewPreviewState(), onIntent = {}, onOpenDiaryDate = {})
             },
-            scalesContent = { ScalesScreen(state = sampleScalesPreviewState(), onIntent = {}) }
+            scalesContent = { ScalesScreen(state = sampleScalesPreviewState(), onIntent = {}) },
+            moreContent = {
+                MoreScreen(
+                    state = sampleMorePreviewState(),
+                    themeConfig = config,
+                    canPinWidget = true,
+                    onIntent = {},
+                    onThemeModeChange = {},
+                    onThemePaletteChange = {},
+                    onRequestNotificationPermission = {},
+                    onRequestExactAlarmPermission = {},
+                    onPinWidgetClick = {}
+                )
+            }
         )
     }
 }
@@ -336,18 +203,30 @@ private fun SpectrAppLightPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun SpectrAppAmoledPreview() {
-    SpectrTheme(
-        themeConfig = ThemeConfig(mode = ThemeMode.AMOLED, palette = ThemePalette.WARM_PAPER)
-    ) {
+    val config = ThemeConfig(mode = ThemeMode.AMOLED, palette = ThemePalette.WARM_PAPER)
+    SpectrTheme(themeConfig = config) {
         SpectrApp(
-            themeConfig = ThemeConfig(mode = ThemeMode.AMOLED, palette = ThemePalette.WARM_PAPER),
+            themeConfig = config,
             onThemeModeChange = {},
             onThemePaletteChange = {},
-            diaryContent = { _, _, _ -> DiaryScreen(state = sampleDiaryPreviewState(), onIntent = {}) },
+            diaryContent = { _, _, _, _, _ -> DiaryScreen(state = sampleDiaryPreviewState(), onIntent = {}) },
             overviewContent = {
                 OverviewScreen(state = sampleOverviewPreviewState(), onIntent = {}, onOpenDiaryDate = {})
             },
-            scalesContent = { ScalesScreen(state = sampleScalesPreviewState(), onIntent = {}) }
+            scalesContent = { ScalesScreen(state = sampleScalesPreviewState(), onIntent = {}) },
+            moreContent = {
+                MoreScreen(
+                    state = sampleMorePreviewState(),
+                    themeConfig = config,
+                    canPinWidget = false,
+                    onIntent = {},
+                    onThemeModeChange = {},
+                    onThemePaletteChange = {},
+                    onRequestNotificationPermission = {},
+                    onRequestExactAlarmPermission = {},
+                    onPinWidgetClick = {}
+                )
+            }
         )
     }
 }

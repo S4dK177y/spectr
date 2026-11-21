@@ -7,6 +7,7 @@ import app.spectr.mood.data.local.db.mapper.toEntity
 import app.spectr.mood.domain.model.ScaleAssessment
 import app.spectr.mood.domain.model.ScaleType
 import app.spectr.mood.domain.model.SyncState
+import app.spectr.mood.domain.reminder.LocalDataChangeHook
 import app.spectr.mood.domain.repository.ScaleAssessmentRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,7 +20,8 @@ import kotlinx.coroutines.flow.map
 @Singleton
 class OfflineScaleAssessmentRepository @Inject constructor(
     private val scaleAssessmentDao: ScaleAssessmentDao,
-    private val clock: EpochClock
+    private val clock: EpochClock,
+    private val dataChangeHook: LocalDataChangeHook = LocalDataChangeHook.NoOp
 ) : ScaleAssessmentRepository {
 
     override fun observeAssessments(): Flow<List<ScaleAssessment>> =
@@ -39,6 +41,7 @@ class OfflineScaleAssessmentRepository @Inject constructor(
             syncState = SyncState.PENDING
         )
         scaleAssessmentDao.upsert(normalized.toEntity())
+        dataChangeHook.onScaleAssessmentChanged()
         return normalized
     }
 
@@ -50,5 +53,6 @@ class OfflineScaleAssessmentRepository @Inject constructor(
             updatedAt = now,
             syncState = SyncState.PENDING.name
         )
+        dataChangeHook.onScaleAssessmentChanged()
     }
 }

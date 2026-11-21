@@ -1,20 +1,13 @@
 package app.spectr.mood.data.local.prefs
 
 import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import app.spectr.mood.domain.model.ThemeConfig
 import app.spectr.mood.domain.model.ThemeMode
 import app.spectr.mood.domain.model.ThemePalette
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-
-private val Context.spectrPreferencesDataStore: DataStore<Preferences> by preferencesDataStore(
-    name = "spectr_settings"
-)
 
 /**
  * Local DataStore repository for visual theme settings.

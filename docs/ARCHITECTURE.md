@@ -6,11 +6,11 @@
 
 ## 1. Слои и пакеты (`app.spectr.mood`)
 
-- `domain/` — чистый Kotlin (без `android.*`, Room и Supabase). Модели, калькуляторы (`ClinicalScaleCalculator`, `SleepDurationCalculator`, `AnalyticsCalculator`), геометрия графиков и календарная сетка (`ChartGeometry`, `CalendarMonthBuilder`), интерфейсы репозиториев, формат JSON-бэкапа.
-- `data/local/` — Room SQLite (offline-first источник правды) + DataStore (настройки тем, уведомлений, приватности, sync-курсора).
+- `domain/` — чистый Kotlin (без `android.*`, Room и Supabase). Модели, калькуляторы (`ClinicalScaleCalculator`, `SleepDurationCalculator`, `AnalyticsCalculator`), геометрия графиков и календарная сетка (`ChartGeometry`, `CalendarMonthBuilder`), планирование напоминаний и снапшот виджета (`ReminderSchedulerCalculator`, `MoodWidgetSnapshotBuilder`, `LocalDataChangeHook`), интерфейсы репозиториев, формат JSON-бэкапа.
+- `data/local/` — Room SQLite (offline-first источник правды) + DataStore (настройки тем, напоминаний, приватности, sync-курсора).
 - `data/remote/` — `supabase-kt` 3.x (`auth-kt`, `postgrest-kt`) + WorkManager `SyncWorker` (delta-sync по `updated_at`, разрешение конфликтов Last-Write-Wins по UTC timestamp).
 - `security/` — `CryptoEngine`, `KeystoreManager`, `RecoveryKeyCodec`, `BiometricLockManager`.
-- `platform/` — `AlarmManager` напоминания, нативный векторный `PdfDocument` генератор, виджет `Jetpack Glance`.
+- `platform/` — `AlarmManager` exact-alarm напоминания с восстановлением после перезагрузки и умной отменой (`ReminderCoordinator`, `SpectrAlarmScheduler`, `SpectrNotificationPublisher`, `ReminderBootReceiver`), нативный векторный `PdfDocument` генератор, виджет `Jetpack Glance 1.1.1` (`MoodGlanceWidget`, `MoodWidgetUpdater`), deep-link контракт `SpectrLaunchContract`.
 - `ui/` — Jetpack Compose + Material 3, однонаправленный поток состояния (`StateFlow<UiState>`), собственные векторные Canvas-графики.
 
 ---

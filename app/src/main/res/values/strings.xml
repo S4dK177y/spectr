@@ -375,4 +375,63 @@
     <string name="theme_palette_soft_slate_desc">Приглушённый спокойный сине-зелёный тон</string>
     <string name="privacy_badge_title">Приватность и offline-first</string>
     <string name="privacy_badge_subtitle">Локальный режим без аккаунта • E2EE-синхронизация Supabase на Этапе 6 • Без телеметрии</string>
+
+    <!-- Notifications & channels (neutral wording, lockscreen-safe) -->
+    <string name="notification_channel_daily_name">Ежедневные напоминания</string>
+    <string name="notification_channel_daily_desc">Вечернее напоминание отметить итог дня</string>
+    <string name="notification_channel_scales_name">Регулярная сверка</string>
+    <string name="notification_channel_scales_desc">Напоминание раз в 14 дней сверить показатели</string>
+
+    <string name="notification_daily_title">Вечерняя отметка</string>
+    <string name="notification_daily_body">Пара минут, чтобы отметить, как прошёл сегодняшний день.</string>
+    <string name="notification_daily_public_body">Напоминание о короткой отметке</string>
+    <string name="notification_daily_action_fill">Заполнить день</string>
+    <string name="notification_daily_action_snooze">Отложить (+1 ч)</string>
+
+    <string name="notification_scales_title">Плановая сверка (14 дн.)</string>
+    <string name="notification_scales_body">Прошло 14 дней — можно сверить шкалы и сохранить подтверждённый замер.</string>
+    <string name="notification_scales_public_body">Плановое напоминание</string>
+    <string name="notification_scales_action_open">Открыть шкалы</string>
+
+    <!-- More tab: Reminders & Widget settings -->
+    <string name="reminders_section_title">Напоминания</string>
+    <string name="reminders_daily_title">Вечернее напоминание</string>
+    <string name="reminders_daily_subtitle">Автоматически отменяется, если «Итог дня» уже заполнен сегодня</string>
+    <string name="reminders_daily_time_label">Время напоминания</string>
+    <string name="reminders_daily_time_picker_title">Время вечернего напоминания</string>
+    <string name="reminders_daily_snoozed_until">Отложено до %1$s</string>
+    <string name="reminders_daily_snooze_clear">Сбросить</string>
+    <string name="reminders_daily_next_today">Следующее: сегодня в %1$s</string>
+    <string name="reminders_daily_next_tomorrow">Следующее: завтра в %1$s</string>
+    <string name="reminders_daily_filled_today_hint">Сегодняшний итог уже заполнен — следующее напоминание завтра в %1$s</string>
+    <string name="reminders_scales_title">Сверка шкал раз в 14 дней</string>
+    <string name="reminders_scales_subtitle">Напомнит сверить PHQ-9, GAD-7 и ASRM и сохранить подтверждённый замер</string>
+    <string name="reminders_scales_next_date">Следующая сверка: %1$s в %2$s</string>
+    <string name="reminders_lockscreen_privacy_note">На экране блокировки отображается только нейтральный текст без чувствительных формулировок.</string>
+
+    <string name="reminders_permission_notifications_title">Уведомления отключены</string>
+    <string name="reminders_permission_notifications_body">Разрешите отправку уведомлений, чтобы напоминания приходили вовремя.</string>
+    <string name="reminders_permission_notifications_action">Разрешить</string>
+    <string name="reminders_permission_exact_title">Точные будильники не разрешены</string>
+    <string name="reminders_permission_exact_body">Без разрешения Android может задерживать напоминания в режиме энергосбережения.</string>
+    <string name="reminders_permission_exact_action">Настроить</string>
+
+    <string name="widget_section_title">Виджет на рабочий стол</string>
+    <string name="widget_section_body">Показывает статус дня, 7-дневную полоску настроения и быстрые кнопки «+ Момент» и «Итог дня».</string>
+    <string name="widget_section_pin_button">Добавить на рабочий стол</string>
+    <string name="widget_section_manual_hint">Если лаунчер не поддерживает автодобавление: долгое нажатие на экран → Виджеты → Spectr.</string>
+    <string name="widget_pin_requested_snackbar">Запрос на добавление виджета отправлен лаунчеру</string>
+
+    <!-- Home-screen Glance Widget -->
+    <string name="widget_mood_label">Spectr · 7 дней</string>
+    <string name="widget_mood_description">Статус дня, 7-дневная полоска настроения и быстрый переход к отметкам</string>
+    <string name="widget_status_filled">Сегодня: %1$s</string>
+    <string name="widget_status_filled_with_moments">Сегодня: %1$s · %2$d мом.</string>
+    <string name="widget_status_filled_mixed">Сегодня: %1$s · смеш.</string>
+    <string name="widget_status_moments_only">Моментов сегодня: %1$d · итог ждёт</string>
+    <string name="widget_status_empty">Итог дня ещё не заполнен</string>
+    <string name="widget_action_add_moment">+ Момент</string>
+    <string name="widget_action_daily_summary">Итог дня</string>
+    <string name="widget_preview_today_mood">+1</string>
+    <string name="widget_preview_status">Сегодня: +1 · 7-дневная динамика</string>
 </resources>

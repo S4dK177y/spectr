@@ -1,5 +1,6 @@
 package app.spectr.mood
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -13,10 +14,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.spectr.mood.data.local.prefs.ThemePreferencesRepository
 import app.spectr.mood.domain.model.ThemeConfig
+import app.spectr.mood.platform.SpectrLaunchContract
+import app.spectr.mood.platform.SpectrLaunchRequest
 import app.spectr.mood.ui.SpectrApp
 import app.spectr.mood.ui.theme.SpectrTheme
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -25,14 +30,22 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var themeRepository: ThemePreferencesRepository
 
+    private val launchRequestFlow = MutableStateFlow<SpectrLaunchRequest?>(null)
+    private val launchSequence = AtomicLong(1L)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (savedInstanceState == null) {
+            dispatchLaunchIntent(intent)
+        }
 
         enableEdgeToEdge()
         setContent {
             val themeConfig by themeRepository.themeConfig.collectAsStateWithLifecycle(
                 initialValue = ThemeConfig()
             )
+            val launchRequest by launchRequestFlow.collectAsStateWithLifecycle()
             val coroutineScope = rememberCoroutineScope()
             val darkTheme = themeConfig.isDark(isSystemInDarkTheme())
 
@@ -57,9 +70,25 @@ class MainActivity : ComponentActivity() {
                     },
                     onThemePaletteChange = { palette ->
                         coroutineScope.launch { themeRepository.setThemePalette(palette) }
-                    }
+                    },
+                    launchRequest = launchRequest,
+                    onLaunchRequestConsumed = { launchRequestFlow.value = null }
                 )
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        dispatchLaunchIntent(intent)
+    }
+
+    private fun dispatchLaunchIntent(intent: Intent?) {
+        val target = SpectrLaunchContract.parseLaunchTarget(intent) ?: return
+        launchRequestFlow.value = SpectrLaunchRequest(
+            id = launchSequence.incrementAndGet(),
+            target = target
+        )
     }
 }

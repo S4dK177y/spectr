@@ -46,6 +46,7 @@ sealed interface DiaryIntent {
 
     // Moment check-ins
     data object OpenNewMoment : DiaryIntent
+    data object OpenQuickMomentForToday : DiaryIntent
     data class OpenEditMoment(val moment: MomentCheckIn) : DiaryIntent
     data class UpdateMomentTime(val hour: Int, val minute: Int) : DiaryIntent
     data class UpdateMomentMood(val mood: Int) : DiaryIntent

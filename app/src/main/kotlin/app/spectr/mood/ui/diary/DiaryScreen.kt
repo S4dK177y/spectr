@@ -49,6 +49,8 @@ fun DiaryRoute(
     modifier: Modifier = Modifier,
     requestedDate: LocalDate? = null,
     onRequestedDateConsumed: () -> Unit = {},
+    openMomentRequestId: Long = 0L,
+    onOpenMomentRequestConsumed: () -> Unit = {},
     viewModel: DiaryViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -58,6 +60,13 @@ fun DiaryRoute(
         if (requestedDate != null) {
             viewModel.onIntent(DiaryIntent.SelectDate(requestedDate))
             onRequestedDateConsumed()
+        }
+    }
+
+    LaunchedEffect(openMomentRequestId) {
+        if (openMomentRequestId != 0L) {
+            viewModel.onIntent(DiaryIntent.OpenQuickMomentForToday)
+            onOpenMomentRequestConsumed()
         }
     }
 

@@ -9,6 +9,7 @@ import app.spectr.mood.data.local.db.mapper.toEntity
 import app.spectr.mood.domain.model.DailyEntry
 import app.spectr.mood.domain.model.MomentCheckIn
 import app.spectr.mood.domain.model.SyncState
+import app.spectr.mood.domain.reminder.LocalDataChangeHook
 import app.spectr.mood.domain.repository.DiaryRepository
 import java.time.LocalDate
 import javax.inject.Inject
@@ -25,7 +26,8 @@ class OfflineDiaryRepository @Inject constructor(
     private val dailyEntryDao: DailyEntryDao,
     private val momentCheckInDao: MomentCheckInDao,
     private val transactionRunner: DatabaseTransactionRunner,
-    private val clock: EpochClock
+    private val clock: EpochClock,
+    private val dataChangeHook: LocalDataChangeHook = LocalDataChangeHook.NoOp
 ) : DiaryRepository {
 
     override fun observeEntries(): Flow<List<DailyEntry>> =
@@ -43,48 +45,52 @@ class OfflineDiaryRepository @Inject constructor(
     override suspend fun getEntryByDate(date: LocalDate): DailyEntry? =
         dailyEntryDao.getActiveByDate(date.toString())?.toDomain()
 
-    override suspend fun saveEntry(entry: DailyEntry): DailyEntry = transactionRunner.runInTransaction {
-        val now = clock.nowMillis()
-        val existingForDate = dailyEntryDao.getActiveByDate(entry.date.toString())
-        val effectiveId = existingForDate?.entry?.id ?: entry.id
+    override suspend fun saveEntry(entry: DailyEntry): DailyEntry {
+        val saved = transactionRunner.runInTransaction {
+            val now = clock.nowMillis()
+            val existingForDate = dailyEntryDao.getActiveByDate(entry.date.toString())
+            val effectiveId = existingForDate?.entry?.id ?: entry.id
 
-        val normalizedIntervals = entry.sleepIntervals
-            .filter { it.deletedAt == null }
-            .map { interval ->
-                interval.copy(
-                    entryId = effectiveId,
+            val normalizedIntervals = entry.sleepIntervals
+                .filter { it.deletedAt == null }
+                .map { interval ->
+                    interval.copy(
+                        entryId = effectiveId,
+                        updatedAt = now,
+                        deletedAt = null,
+                        syncState = SyncState.PENDING
+                    )
+                }
+
+            val normalizedEntry = entry.copy(
+                id = effectiveId,
+                sleepIntervals = normalizedIntervals,
+                updatedAt = now,
+                deletedAt = null,
+                syncState = SyncState.PENDING
+            )
+
+            dailyEntryDao.upsertEntry(normalizedEntry.toEntity())
+
+            val previousActiveIds = dailyEntryDao.getActiveIntervalsForEntry(effectiveId).map { it.id }.toSet()
+            val incomingIds = normalizedIntervals.map { it.id }.toSet()
+            val removedIds = previousActiveIds - incomingIds
+            for (removedId in removedIds) {
+                dailyEntryDao.softDeleteInterval(
+                    id = removedId,
+                    deletedAt = now,
                     updatedAt = now,
-                    deletedAt = null,
-                    syncState = SyncState.PENDING
+                    syncState = SyncState.PENDING.name
                 )
             }
+            if (normalizedIntervals.isNotEmpty()) {
+                dailyEntryDao.upsertIntervals(normalizedIntervals.map { it.toEntity() })
+            }
 
-        val normalizedEntry = entry.copy(
-            id = effectiveId,
-            sleepIntervals = normalizedIntervals,
-            updatedAt = now,
-            deletedAt = null,
-            syncState = SyncState.PENDING
-        )
-
-        dailyEntryDao.upsertEntry(normalizedEntry.toEntity())
-
-        val previousActiveIds = dailyEntryDao.getActiveIntervalsForEntry(effectiveId).map { it.id }.toSet()
-        val incomingIds = normalizedIntervals.map { it.id }.toSet()
-        val removedIds = previousActiveIds - incomingIds
-        for (removedId in removedIds) {
-            dailyEntryDao.softDeleteInterval(
-                id = removedId,
-                deletedAt = now,
-                updatedAt = now,
-                syncState = SyncState.PENDING.name
-            )
+            normalizedEntry
         }
-        if (normalizedIntervals.isNotEmpty()) {
-            dailyEntryDao.upsertIntervals(normalizedIntervals.map { it.toEntity() })
-        }
-
-        normalizedEntry
+        dataChangeHook.onDailyEntryChanged(saved.date)
+        return saved
     }
 
     override suspend fun deleteEntry(id: String) {
@@ -103,6 +109,7 @@ class OfflineDiaryRepository @Inject constructor(
                 syncState = SyncState.PENDING.name
             )
         }
+        dataChangeHook.onDailyEntryChanged(date = null)
     }
 
     override fun observeMomentsByDate(date: LocalDate): Flow<List<MomentCheckIn>> =
@@ -123,6 +130,7 @@ class OfflineDiaryRepository @Inject constructor(
             syncState = SyncState.PENDING
         )
         momentCheckInDao.upsert(normalized.toEntity())
+        dataChangeHook.onMomentChanged(normalized.entryDate)
         return normalized
     }
 
@@ -134,5 +142,6 @@ class OfflineDiaryRepository @Inject constructor(
             updatedAt = now,
             syncState = SyncState.PENDING.name
         )
+        dataChangeHook.onMomentChanged(date = null)
     }
 }

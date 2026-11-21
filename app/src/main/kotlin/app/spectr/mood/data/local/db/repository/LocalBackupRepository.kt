@@ -17,6 +17,7 @@ import app.spectr.mood.domain.model.MedicationRecord
 import app.spectr.mood.domain.model.MomentCheckIn
 import app.spectr.mood.domain.model.ScaleAssessment
 import app.spectr.mood.domain.model.SyncState
+import app.spectr.mood.domain.reminder.LocalDataChangeHook
 import app.spectr.mood.domain.repository.BackupRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,7 +32,8 @@ class LocalBackupRepository @Inject constructor(
     private val scaleAssessmentDao: ScaleAssessmentDao,
     private val medicationRecordDao: MedicationRecordDao,
     private val transactionRunner: DatabaseTransactionRunner,
-    private val clock: EpochClock
+    private val clock: EpochClock,
+    private val dataChangeHook: LocalDataChangeHook = LocalDataChangeHook.NoOp
 ) : BackupRepository {
 
     override suspend fun exportJson(exportedAtEpochMs: Long): String {
@@ -47,12 +49,14 @@ class LocalBackupRepository @Inject constructor(
 
     override suspend fun importJson(rawJson: String, mode: BackupImportMode): BackupImportSummary {
         val backup = SpectrBackupCodec.decode(rawJson)
-        return transactionRunner.runInTransaction {
+        val summary = transactionRunner.runInTransaction {
             when (mode) {
                 BackupImportMode.REPLACE -> replaceAll(backup)
                 BackupImportMode.MERGE -> mergeAll(backup)
             }
         }
+        dataChangeHook.onBulkDataImported()
+        return summary
     }
 
     private suspend fun replaceAll(backup: SpectrBackupData): BackupImportSummary {

@@ -385,6 +385,24 @@ class DiaryViewModelTest {
         viewModel.onIntent(DiaryIntent.DismissDatePicker)
         assertFalse(viewModel.uiState.value.isDatePickerOpen)
     }
+
+    @Test
+    fun `quick moment for today switches back from yesterday and opens moment sheet`() = runTest(testDispatcher) {
+        val viewModel = DiaryViewModel(repository, fixedClock)
+        advanceUntilIdle()
+
+        viewModel.onIntent(DiaryIntent.SelectYesterday)
+        advanceUntilIdle()
+        assertEquals(today.minusDays(1), viewModel.uiState.value.selectedDate)
+
+        viewModel.onIntent(DiaryIntent.OpenQuickMomentForToday)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(today, state.selectedDate)
+        assertNotNull(state.momentEditor)
+        assertEquals(fixedInstant.toEpochMilli(), state.momentEditor!!.timestampEpochMs)
+    }
 }
 
 private class InMemoryDiaryRepository : DiaryRepository {

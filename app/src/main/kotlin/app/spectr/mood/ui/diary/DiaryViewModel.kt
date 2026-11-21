@@ -120,6 +120,7 @@ class DiaryViewModel @Inject constructor(private val diaryRepository: DiaryRepos
     private fun handleMomentIntent(intent: DiaryIntent) {
         when (intent) {
             DiaryIntent.OpenNewMoment -> openNewMomentEditor()
+            DiaryIntent.OpenQuickMomentForToday -> openQuickMomentForToday()
             is DiaryIntent.OpenEditMoment -> openEditMomentEditor(intent.moment)
             is DiaryIntent.UpdateMomentTime -> updateMomentTime(intent.hour, intent.minute)
             is DiaryIntent.UpdateMomentMood -> updateMomentEditor {
@@ -366,6 +367,21 @@ class DiaryViewModel @Inject constructor(private val diaryRepository: DiaryRepos
             it.copy(
                 momentEditor = MomentEditorState(
                     timestampEpochMs = defaultTimestamp,
+                    mood = 0
+                )
+            )
+        }
+    }
+
+    private fun openQuickMomentForToday() {
+        val today = currentToday()
+        if (_uiState.value.selectedDate != today) {
+            selectDate(today)
+        }
+        _uiState.update {
+            it.copy(
+                momentEditor = MomentEditorState(
+                    timestampEpochMs = clock.millis(),
                     mood = 0
                 )
             )
