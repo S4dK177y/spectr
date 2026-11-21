@@ -374,7 +374,7 @@
     <string name="theme_palette_soft_slate">Мягкий сланец</string>
     <string name="theme_palette_soft_slate_desc">Приглушённый спокойный сине-зелёный тон</string>
     <string name="privacy_badge_title">Приватность и offline-first</string>
-    <string name="privacy_badge_subtitle">Локальный режим без аккаунта • PIN/биометрия и FLAG_SECURE • E2EE-синхронизация Supabase на Этапе 6 • Без телеметрии</string>
+    <string name="privacy_badge_subtitle">Локальный режим без аккаунта • PIN, биометрия и защита экрана • E2EE-синхронизация Supabase на Этапе 7 • Без телеметрии</string>
 
     <!-- Notifications & channels (neutral wording, lockscreen-safe) -->
     <string name="notification_channel_daily_name">Ежедневные напоминания</string>
@@ -455,11 +455,13 @@
     <string name="security_biometric_subtitle_not_enrolled">На устройстве не настроена биометрия в системных настройках</string>
     <string name="security_biometric_subtitle_unavailable">Биометрический датчик недоступен на этом устройстве</string>
     <string name="security_timeout_label">Автоблокировка после сворачивания</string>
+    <string name="security_timeout_disabled">Выкл</string>
+    <string name="security_timeout_disabled_hint">Блокировка включится только после перезапуска приложения или блокировки экрана смартфона</string>
     <string name="security_timeout_immediate">Сразу</string>
     <string name="security_timeout_30s">30 сек</string>
     <string name="security_timeout_1m">1 мин</string>
     <string name="security_timeout_5m">5 мин</string>
-    <string name="security_flag_secure_title">Защита экрана (FLAG_SECURE)</string>
+    <string name="security_flag_secure_title">Защита экрана</string>
     <string name="security_flag_secure_subtitle">Блокирует скриншоты, запись экрана и скрывает превью в списке недавних</string>
     <string name="security_snackbar_pin_enabled">Блокировка PIN-кодом включена</string>
     <string name="security_snackbar_pin_changed">PIN-код обновлён</string>

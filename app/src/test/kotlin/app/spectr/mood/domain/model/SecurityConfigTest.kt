@@ -53,4 +53,34 @@ class SecurityConfigTest {
         assertTrue(config.shouldLockAfterBackground(500_000L, 500_000L))
         assertTrue(config.shouldLockAfterBackground(500_000L, 500_001L))
     }
+
+    @Test
+    fun `disabled on minimize only locks on cold start or when smartphone screen was locked`() {
+        val config = SecurityConfig(
+            isAppLockEnabled = true,
+            hasPinConfigured = true,
+            lockTimeout = LockTimeout.DISABLED_ON_MINIMIZE
+        )
+
+        // Cold start / app restart -> locks
+        assertTrue(config.shouldLockAfterBackground(lastBackgroundEpochMs = null, nowEpochMs = 1_000_000L))
+
+        // Normal app minimize (even after 1 hour) without smartphone screen lock -> does NOT lock
+        assertFalse(
+            config.shouldLockAfterBackground(
+                lastBackgroundEpochMs = 1_000_000L,
+                nowEpochMs = 4_600_000L,
+                wasDeviceScreenLocked = false
+            )
+        )
+
+        // Smartphone screen was locked -> locks immediately on resume
+        assertTrue(
+            config.shouldLockAfterBackground(
+                lastBackgroundEpochMs = 1_000_000L,
+                nowEpochMs = 1_001_000L,
+                wasDeviceScreenLocked = true
+            )
+        )
+    }
 }

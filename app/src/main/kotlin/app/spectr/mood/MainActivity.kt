@@ -1,9 +1,14 @@
 package app.spectr.mood
 
+import android.app.KeyguardManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Bundle
 import android.os.CancellationSignal
+import android.os.PowerManager
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -63,16 +68,31 @@ class MainActivity : ComponentActivity() {
     private var latestSecurityConfig: SecurityConfig? = null
     private var hasEvaluatedColdStartLock = false
     private var lastBackgroundEpochMs: Long? = null
+    private var wasDeviceScreenLocked = false
     private var activeBiometricSignal: CancellationSignal? = null
+
+    private val screenOffReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == Intent.ACTION_SCREEN_OFF) {
+                wasDeviceScreenLocked = true
+                if (latestSecurityConfig?.isLockActive == true) {
+                    isLockedFlow.value = true
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        registerReceiver(screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
 
         if (savedInstanceState == null) {
             dispatchLaunchIntent(intent)
         } else {
             hasEvaluatedColdStartLock = savedInstanceState.getBoolean(KEY_EVALUATED_COLD_START, false)
             isLockedFlow.value = savedInstanceState.getBoolean(KEY_IS_LOCKED, false)
+            wasDeviceScreenLocked = savedInstanceState.getBoolean(KEY_WAS_DEVICE_SCREEN_LOCKED, false)
             if (savedInstanceState.containsKey(KEY_LAST_BACKGROUND_MS)) {
                 lastBackgroundEpochMs = savedInstanceState.getLong(KEY_LAST_BACKGROUND_MS)
             }
@@ -128,6 +148,7 @@ class MainActivity : ComponentActivity() {
                     onSuccess = {
                         activeBiometricSignal = null
                         biometricError = null
+                        wasDeviceScreenLocked = false
                         isLockedFlow.value = false
                     },
                     onError = { message ->
@@ -161,6 +182,7 @@ class MainActivity : ComponentActivity() {
                             onTriggerBiometric = triggerBiometric,
                             onUnlocked = {
                                 biometricError = null
+                                wasDeviceScreenLocked = false
                                 isLockedFlow.value = false
                             },
                             biometricErrorMessage = biometricError
@@ -193,7 +215,13 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         val cfg = latestSecurityConfig
         if (hasEvaluatedColdStartLock && !isLockedFlow.value && cfg != null) {
-            if (cfg.shouldLockAfterBackground(lastBackgroundEpochMs, clock.millis())) {
+            val shouldLock = cfg.shouldLockAfterBackground(
+                lastBackgroundEpochMs = lastBackgroundEpochMs,
+                nowEpochMs = clock.millis(),
+                wasDeviceScreenLocked = wasDeviceScreenLocked
+            )
+            wasDeviceScreenLocked = false
+            if (shouldLock) {
                 isLockedFlow.value = true
             }
         }
@@ -205,13 +233,22 @@ class MainActivity : ComponentActivity() {
         activeBiometricSignal = null
         if (!isChangingConfigurations) {
             lastBackgroundEpochMs = clock.millis()
+            if (isDeviceScreenOffOrLocked()) {
+                wasDeviceScreenLocked = true
+            }
         }
+    }
+
+    override fun onDestroy() {
+        runCatching { unregisterReceiver(screenOffReceiver) }
+        super.onDestroy()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean(KEY_EVALUATED_COLD_START, hasEvaluatedColdStartLock)
         outState.putBoolean(KEY_IS_LOCKED, isLockedFlow.value)
+        outState.putBoolean(KEY_WAS_DEVICE_SCREEN_LOCKED, wasDeviceScreenLocked)
         lastBackgroundEpochMs?.let { outState.putLong(KEY_LAST_BACKGROUND_MS, it) }
     }
 
@@ -227,6 +264,14 @@ class MainActivity : ComponentActivity() {
         } else {
             window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
         }
+    }
+
+    private fun isDeviceScreenOffOrLocked(): Boolean {
+        val powerManager = getSystemService(PowerManager::class.java)
+        val keyguardManager = getSystemService(KeyguardManager::class.java)
+        val screenOff = powerManager != null && !powerManager.isInteractive
+        val keyguardLocked = keyguardManager != null && keyguardManager.isKeyguardLocked
+        return screenOff || keyguardLocked
     }
 
     private suspend fun verifyStoredPin(candidatePin: String): Boolean {
@@ -248,5 +293,6 @@ class MainActivity : ComponentActivity() {
         private const val KEY_EVALUATED_COLD_START = "spectr_evaluated_cold_start"
         private const val KEY_IS_LOCKED = "spectr_is_locked"
         private const val KEY_LAST_BACKGROUND_MS = "spectr_last_background_ms"
+        private const val KEY_WAS_DEVICE_SCREEN_LOCKED = "spectr_was_device_screen_locked"
     }
 }

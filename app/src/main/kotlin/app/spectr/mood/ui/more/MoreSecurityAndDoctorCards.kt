@@ -7,8 +7,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -45,6 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import app.spectr.mood.R
@@ -202,13 +206,18 @@ internal fun LocalSecurityCard(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedButton(
                         onClick = { onIntent(MoreIntent.OpenChangePinDialog) },
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f)
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Pin,
@@ -216,13 +225,21 @@ internal fun LocalSecurityCard(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = stringResource(R.string.security_change_pin_button))
+                        Text(
+                            text = stringResource(R.string.security_change_pin_button),
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
 
                     FilledTonalButton(
                         onClick = onLockNowClick,
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f)
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Lock,
@@ -230,7 +247,12 @@ internal fun LocalSecurityCard(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = stringResource(R.string.security_lock_now_button))
+                        Text(
+                            text = stringResource(R.string.security_lock_now_button),
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
 
@@ -269,6 +291,14 @@ internal fun LocalSecurityCard(
                             label = { Text(text = lockTimeoutLabel(timeout)) }
                         )
                     }
+                }
+                if (config.lockTimeout == LockTimeout.DISABLED_ON_MINIMIZE) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.security_timeout_disabled_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
@@ -331,6 +361,7 @@ private fun SecurityToggleRow(
 
 @Composable
 private fun lockTimeoutLabel(timeout: LockTimeout): String = when (timeout) {
+    LockTimeout.DISABLED_ON_MINIMIZE -> stringResource(R.string.security_timeout_disabled)
     LockTimeout.IMMEDIATE -> stringResource(R.string.security_timeout_immediate)
     LockTimeout.SECONDS_30 -> stringResource(R.string.security_timeout_30s)
     LockTimeout.MINUTE_1 -> stringResource(R.string.security_timeout_1m)
